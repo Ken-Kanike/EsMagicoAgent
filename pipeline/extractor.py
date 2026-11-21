@@ -8,6 +8,7 @@ from pipeline.document_loader import load_document
 from pipeline.ocr_engine import get_best_document_text
 from pipeline.validator import InvoiceValidator
 from pipeline.cost_tracker import CostTracker
+from pipeline.pii_shield import PIIShield, PIIDetectionResult
 from ai_backends.base import AIBackend
 from ai_backends.router import get_backend
 
@@ -71,9 +72,13 @@ class InvoiceExtractor:
         # 2. Text resolution (PyMuPDF embedded text + Tesseract fallback)
         text = get_best_document_text(doc)
 
+        # 2b. Enterprise PII Redaction Shield (Sanitize sensitive banking/national IDs before external cloud LLMs)
+        pii_result = PIIShield.sanitize_text(text, mask_enabled=getattr(settings, "pii_shield_enabled", True))
+        prompt_text = pii_result.masked_text if self.backend.name != "No-AI (Rule-Based & Regex Engine)" else text
+
         # 3. First extraction attempt
         try:
-            raw_response, usage = self.backend.extract(text, doc.images)
+            raw_response, usage = self.backend.extract(prompt_text, doc.images)
         except Exception as e:
             return ExtractionResult.error_result(file_name, f"Extraction failed at backend: {str(e)}")
 
@@ -123,6 +128,15 @@ class InvoiceExtractor:
 
         # Final structured payload
         final_dict = validated_obj.model_dump() if validated_obj else parsed_data
+
+        # Restore any PII tokens in the local record so internal ledger is 100% complete
+        if pii_result.entity_map and final_dict:
+            try:
+                final_str = json.dumps(final_dict)
+                final_str = PIIShield.restore_entities(final_str, pii_result.entity_map)
+                final_dict = json.loads(final_str)
+            except Exception:
+                pass
 
         return ExtractionResult(
             file=file_name,

@@ -57,6 +57,7 @@ class Settings(BaseSettings):
     max_retries: int = 2
     request_timeout: int = 60
     log_level: str = "INFO"
+    pii_shield_enabled: bool = True
 
     @property
     def groq_api_keys(self) -> List[str]:

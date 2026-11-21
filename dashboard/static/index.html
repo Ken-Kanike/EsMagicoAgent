@@ -1,14 +1,15 @@
 <!DOCTYPE html>
 <html lang="en" class="dark">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>EsMagico | Intelligent Invoice Extraction System</title>
-  
+  <title>EsMagico AP Intelligence | Enterprise Autonomous Invoice Pipeline</title>
+
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -23,26 +24,22 @@
       theme: {
         extend: {
           colors: {
-            app: {
-              bg: '#0f1117',
-              sidebar: '#151821',
-              card: '#1a1e29',
-              cardHover: '#212634',
-              border: '#2a3142',
-              borderLight: '#353e54',
-              accent: '#3b82f6',
-              accentHover: '#2563eb',
-              textPrimary: '#f1f5f9',
-              textSecondary: '#94a3b8',
-              textMuted: '#64748b',
-              emerald: '#10b981',
-              amber: '#f59e0b',
-              rose: '#f43f5e',
-            }
+            obsidian: {
+              950: '#06070a',
+              900: '#0a0d14',
+              850: '#0e121d',
+              800: '#131826',
+              750: '#181e30',
+              700: '#1f273d',
+              border: '#1e263d',
+              borderGlow: '#2b3658',
+            },
+            cyanGlow: '#00f0ff',
+            electricBlue: '#2979ff',
           },
           fontFamily: {
-            sans: ['Inter', 'sans-serif'],
-            mono: ['JetBrains Mono', 'monospace'],
+            sans: ['"Plus Jakarta Sans"', 'Inter', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
           }
         }
       }
@@ -51,250 +48,304 @@
 
   <style>
     body {
-      background-color: #0f1117;
+      background-color: #07090e;
+      background-image: 
+        radial-gradient(at 15% 15%, rgba(41, 121, 255, 0.08) 0px, transparent 55%),
+        radial-gradient(at 85% 85%, rgba(0, 240, 255, 0.05) 0px, transparent 50%);
       color: #f1f5f9;
-      font-family: 'Inter', sans-serif;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      min-height: 100vh;
     }
-    .card {
-      background-color: #1a1e29;
-      border: 1px solid #2a3142;
-      border-radius: 6px;
+
+    .glass-card {
+      background: rgba(15, 19, 31, 0.75);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid #1c2438;
+      border-radius: 16px;
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.45);
     }
-    .nav-link {
+
+    .glass-card:hover {
+      border-color: #2b3658;
+    }
+    .nav-pill {
       color: #94a3b8;
-      transition: all 0.15s ease;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    .nav-link:hover, .nav-link.active {
+    .nav-pill:hover {
       color: #ffffff;
-      background-color: #212634;
-      border-color: #3b82f6;
+      background: rgba(28, 36, 56, 0.6);
+    }
+    .nav-pill.active {
+      color: #00f0ff;
+      background: rgba(28, 38, 64, 0.95);
+      border: 1px solid rgba(0, 240, 255, 0.35);
+      box-shadow: 0 0 16px rgba(0, 240, 255, 0.15);
+      font-weight: 600;
+    }
+    .btn-gradient {
+      background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 50%, #1e40af 100%);
+      box-shadow: 0 0 15px rgba(37, 99, 235, 0.35);
+      transition: all 0.2s ease;
+    }
+    .btn-gradient:hover {
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+      transform: translateY(-1px);
+    }
+    .btn-cyan {
+      background: linear-gradient(135deg, #00d2ff 0%, #0099ff 100%);
+      box-shadow: 0 0 18px rgba(0, 210, 255, 0.35);
+      transition: all 0.2s ease;
+    }
+    .btn-cyan:hover {
+      background: linear-gradient(135deg, #33dcff 0%, #1ab0ff 100%);
+      box-shadow: 0 0 24px rgba(0, 210, 255, 0.55);
+      transform: translateY(-1px);
     }
     ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: #0f1117; }
-    ::-webkit-scrollbar-thumb { background: #2a3142; border-radius: 3px; }
-    ::-webkit-scrollbar-thumb:hover { background: #353e54; }
+    ::-webkit-scrollbar-track { background: #07090e; }
+    ::-webkit-scrollbar-thumb { background: #1c2438; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #2b3658; }
   </style>
 </head>
 
-<body class="min-h-screen flex flex-col">
+<body class="flex flex-col min-h-screen">
 
-  <!-- TOP HEADER & MAIN NAVIGATION -->
-  <header class="bg-[#151821] border-b border-[#2a3142] px-6 py-2.5 flex items-center justify-between sticky top-0 z-50">
+  <!-- TOP ENTERPRISE HEADER (Strike-Themed) -->
+  <header class="bg-[#0b0e17]/90 backdrop-blur-md border-b border-[#1c2438] px-6 py-3 flex items-center justify-between sticky top-0 z-50">
     <div class="flex items-center space-x-6">
-      <!-- Brand Logo -->
-      <div class="flex items-center space-x-2.5">
-        <div class="w-8 h-8 rounded bg-blue-600 flex items-center justify-center font-bold text-white shadow">
-          <i data-lucide="receipt" class="w-4 h-4 text-white"></i>
+      
+      <!-- Brand Logo & Lightning Bolt Mark -->
+      <div class="flex items-center space-x-3">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-400 flex items-center justify-center font-bold text-white shadow-[0_0_20px_rgba(41,121,255,0.4)]">
+          <i data-lucide="zap" class="w-5 h-5 text-white fill-current"></i>
         </div>
         <div>
-          <div class="text-sm font-semibold tracking-wide text-white">EsMagico AP Intelligence</div>
-          <div class="text-[11px] text-slate-400 font-mono">Invoice Extraction & Validation Pipeline</div>
+          <div class="text-sm font-bold tracking-wide text-white flex items-center space-x-1.5">
+            <span>EsMagico</span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded bg-blue-900/60 border border-blue-500/30 text-blue-300 font-mono">v2.1 PRO</span>
+          </div>
+          <div class="text-[11px] text-slate-400 font-mono">Enterprise AP & OCR Engine</div>
         </div>
       </div>
 
-      <!-- Navigation Tabs -->
-      <nav class="flex items-center space-x-1 pl-4 border-l border-[#2a3142] text-xs font-medium">
-        <button onclick="navigatePage('workspace')" id="navWorkspace" class="nav-link active px-3 py-1.5 rounded flex items-center space-x-1.5 border border-transparent">
+      <!-- Navigation Pills Bar -->
+      <nav class="flex items-center space-x-1 p-1 bg-[#0e121d] border border-[#1c2438] rounded-xl text-xs font-medium">
+        <button onclick="navigatePage('workspace')" id="navWorkspace" class="nav-pill active px-3.5 py-1.5 rounded-lg flex items-center space-x-1.5">
           <i data-lucide="layout" class="w-3.5 h-3.5"></i>
           <span>Workspace</span>
         </button>
-        <button onclick="navigatePage('batch')" id="navBatch" class="nav-link px-3 py-1.5 rounded flex items-center space-x-1.5 border border-transparent">
+        <button onclick="navigatePage('batch')" id="navBatch" class="nav-pill px-3.5 py-1.5 rounded-lg flex items-center space-x-1.5">
           <i data-lucide="layers" class="w-3.5 h-3.5"></i>
-          <span>Batch Processing</span>
+          <span>Batch Ingestion</span>
         </button>
-        <button onclick="navigatePage('analytics')" id="navAnalytics" class="nav-link px-3 py-1.5 rounded flex items-center space-x-1.5 border border-transparent">
-          <i data-lucide="bar-chart-2" class="w-3.5 h-3.5"></i>
-          <span>Analytics & Benchmarks</span>
+        <button onclick="navigatePage('templates')" id="navTemplates" class="nav-pill px-3.5 py-1.5 rounded-lg flex items-center space-x-1.5">
+          <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-400"></i>
+          <span>Template Studio</span>
         </button>
-        <button onclick="navigatePage('mcp')" id="navMcp" class="nav-link px-3 py-1.5 rounded flex items-center space-x-1.5 border border-transparent">
+        <button onclick="navigatePage('analytics')" id="navAnalytics" class="nav-pill px-3.5 py-1.5 rounded-lg flex items-center space-x-1.5">
+          <i data-lucide="pie-chart" class="w-3.5 h-3.5"></i>
+          <span>Analytics</span>
+        </button>
+        <button onclick="navigatePage('mcp')" id="navMcp" class="nav-pill px-3.5 py-1.5 rounded-lg flex items-center space-x-1.5">
           <i data-lucide="cpu" class="w-3.5 h-3.5"></i>
-          <span>MCP & Local Engines</span>
+          <span>MCP & Local AI</span>
         </button>
-        <button onclick="navigatePage('settings')" id="navSettings" class="nav-link px-3 py-1.5 rounded flex items-center space-x-1.5 border border-transparent">
-          <i data-lucide="key" class="w-3.5 h-3.5"></i>
-          <span>API Keys & Store</span>
+        <button onclick="navigatePage('settings')" id="navSettings" class="nav-pill px-3.5 py-1.5 rounded-lg flex items-center space-x-1.5">
+          <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
+          <span>Security & Keys</span>
         </button>
       </nav>
     </div>
 
-    <!-- Right Controls -->
+    <!-- Right Controls: PII Shield Status & Backend Mode -->
     <div class="flex items-center space-x-3 text-xs">
+      
+      <!-- PII Protection Badge -->
+      <div id="piiShieldBadge" class="flex items-center space-x-2 px-3 py-1.5 rounded-xl bg-[#0e1626] border border-emerald-500/40 text-emerald-300 font-mono shadow-[0_0_12px_rgba(16,185,129,0.15)]">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span class="font-semibold text-[11px] tracking-wider">PII SHIELD: ACTIVE</span>
+      </div>
+
       <!-- AI Mode Selector -->
-      <div class="flex items-center space-x-2 bg-[#0f1117] border border-[#2a3142] rounded px-2.5 py-1.5">
-        <span class="text-slate-400">Mode:</span>
-        <select id="headerModeSelect" onchange="onModeChange()" class="bg-transparent text-white focus:outline-none font-medium cursor-pointer">
-          <option value="no_ai" class="bg-[#151821]">No-AI (Rule & Layout Engine)</option>
-          <option value="groq" class="bg-[#151821]">Groq Cloud (10-Key Rotation)</option>
-          <option value="local" class="bg-[#151821]">Local LLM (Ollama/Hermes)</option>
-          <option value="gemini" class="bg-[#151821]">Google Gemini 1.5</option>
-          <option value="openai" class="bg-[#151821]">OpenAI GPT-4o-mini</option>
+      <div class="flex items-center space-x-2 bg-[#0e121d] border border-[#1c2438] rounded-xl px-3 py-1.5">
+        <span class="text-slate-400 font-mono text-[11px]">Backend:</span>
+        <select id="headerModeSelect" onchange="onModeChange()" class="bg-transparent text-white focus:outline-none font-semibold cursor-pointer">
+          <option value="no_ai" class="bg-[#0e121d]">No-AI (Rule & Layout Engine)</option>
+          <option value="groq" class="bg-[#0e121d]">Groq Cloud (10-Key Rotation)</option>
+          <option value="local" class="bg-[#0e121d]">Local LLM (Ollama/Hermes)</option>
+          <option value="gemini" class="bg-[#0e121d]">Google Gemini 1.5</option>
+          <option value="openai" class="bg-[#0e121d]">OpenAI GPT-4o-mini</option>
         </select>
       </div>
 
       <!-- Quick Export Excel Button -->
-      <a href="/api/export/excel" download class="flex items-center space-x-1.5 bg-emerald-700 hover:bg-emerald-600 text-white font-medium px-3 py-1.5 rounded transition shadow-sm">
+      <a href="/api/export/excel" download class="flex items-center space-x-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-semibold px-3.5 py-1.5 rounded-xl transition shadow-[0_0_15px_rgba(16,185,129,0.25)]">
         <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i>
-        <span>Export Excel (.xlsx)</span>
+        <span>Export .xlsx</span>
       </a>
     </div>
   </header>
 
-  <!-- CONTENT CONTAINER -->
-  <main class="flex-1 p-5 max-w-[1920px] mx-auto w-full">
+  <!-- MAIN APP CONTAINER -->
+  <main class="flex-1 p-6 max-w-[1920px] mx-auto w-full">
 
     <!-- ========================================================= -->
-    <!-- PAGE 1: WORKSPACE (FOCUSED DOCUMENT VIEWER & EXTRACTION) -->
+    <!-- PAGE 1: WORKSPACE (FOCUSED DOCUMENT VIEWER & DATA)        -->
     <!-- ========================================================= -->
     <div id="pageWorkspace" class="space-y-4">
-      
-      <!-- Top Workspace Toolbar -->
-      <div class="card p-3 flex flex-wrap items-center justify-between gap-3">
-        <div class="flex items-center space-x-3 flex-1 min-w-[300px]">
-          <!-- Sample Selector -->
+
+      <!-- Top Action Bar -->
+      <div class="glass-card p-3 flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center space-x-3 flex-1 min-w-[320px]">
           <div class="flex items-center space-x-2">
-            <span class="text-xs text-slate-400 font-medium">Document:</span>
-            <select id="docSelect" onchange="loadSelectedDocument()" class="bg-[#0f1117] border border-[#2a3142] text-xs text-white rounded px-2.5 py-1.5 font-mono cursor-pointer focus:outline-none min-w-[240px]">
-              <!-- Injected dynamically -->
+            <span class="text-xs text-slate-400 font-mono">Invoice:</span>
+            <select id="docSelect" onchange="loadSelectedDocument()" class="bg-[#090b12] border border-[#1c2438] text-xs text-white rounded-xl px-3 py-1.5 font-mono cursor-pointer focus:outline-none focus:border-cyan-400 min-w-[260px]">
+              <!-- Dynamically populated -->
             </select>
           </div>
 
-          <!-- Drag & Drop / Custom Upload Button -->
-          <label class="cursor-pointer bg-[#212634] hover:bg-[#2a3142] border border-[#2a3142] text-xs text-slate-200 px-3 py-1.5 rounded flex items-center space-x-1.5 transition">
-            <i data-lucide="upload" class="w-3.5 h-3.5 text-blue-400"></i>
-            <span>Upload Invoice File</span>
-            <input type="file" id="fileUploadInput" onchange="handleFileUpload(event)" accept=".pdf,.jpg,.jpeg,.png" class="hidden" />
+          <!-- Drag & Drop Single File Upload -->
+          <label class="cursor-pointer bg-[#141a2e] hover:bg-[#1a233d] border border-[#1c2438] text-xs text-slate-200 px-3.5 py-1.5 rounded-xl flex items-center space-x-1.5 transition">
+            <i data-lucide="upload" class="w-3.5 h-3.5 text-cyan-400"></i>
+            <span>Upload Single File</span>
+            <input type="file" id="fileUploadInput" onchange="handleSingleFileUpload(event)" accept=".pdf,.jpg,.jpeg,.png" class="hidden" />
           </label>
         </div>
 
-        <!-- Extract Button & Format Options -->
+        <!-- Extract Trigger -->
         <div class="flex items-center space-x-2">
-          <button id="btnExtract" onclick="extractCurrentDocument()" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs px-4 py-1.5 rounded shadow flex items-center space-x-1.5 transition">
+          <button id="btnExtract" onclick="extractCurrentDocument()" class="btn-cyan text-slate-950 font-bold text-xs px-5 py-2 rounded-xl flex items-center space-x-1.5 transition">
             <i data-lucide="play" class="w-3.5 h-3.5 fill-current"></i>
             <span>Extract & Validate</span>
           </button>
         </div>
       </div>
 
-      <!-- MAIN SPLIT WORKSPACE: VIEWER (LEFT) & DATA (RIGHT) -->
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 h-[calc(100vh-175px)] min-h-[650px]">
-        
-        <!-- LEFT: CLEAN DOCUMENT VIEWER (5 Cols) -->
-        <div class="lg:col-span-5 card flex flex-col overflow-hidden">
-          <div class="p-3 border-b border-[#2a3142] flex items-center justify-between text-xs">
+      <!-- MAIN SPLIT WORKSPACE: VIEWER (LEFT) & VERIFIED DATA (RIGHT) -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 h-[calc(100vh-185px)] min-h-[660px]">
+
+        <!-- LEFT: DOCUMENT VIEWER (5 Cols) -->
+        <div class="lg:col-span-5 glass-card flex flex-col overflow-hidden">
+          <div class="p-3.5 border-b border-[#1c2438] flex items-center justify-between text-xs">
             <div class="flex items-center space-x-2">
-              <i data-lucide="file-text" class="w-4 h-4 text-slate-400"></i>
-              <span id="viewerFilename" class="font-medium text-white">L01.pdf</span>
-              <span id="viewerBadge" class="bg-[#212634] text-slate-300 text-[10px] font-mono px-2 py-0.5 rounded">Digital PDF</span>
+              <i data-lucide="file-text" class="w-4 h-4 text-cyan-400"></i>
+              <span id="viewerFilename" class="font-semibold text-white">L01.pdf</span>
+              <span id="viewerBadge" class="bg-[#141a2e] text-slate-300 text-[10px] font-mono px-2 py-0.5 rounded-md border border-[#1c2438]">Digital PDF</span>
             </div>
             <!-- Zoom Controls -->
-            <div class="flex items-center space-x-1">
-              <button onclick="zoom(1.1)" class="p-1 hover:text-white text-slate-400 hover:bg-[#212634] rounded"><i data-lucide="zoom-in" class="w-3.5 h-3.5"></i></button>
-              <button onclick="zoom(0.9)" class="p-1 hover:text-white text-slate-400 hover:bg-[#212634] rounded"><i data-lucide="zoom-out" class="w-3.5 h-3.5"></i></button>
-              <button onclick="zoomReset()" class="p-1 hover:text-white text-slate-400 hover:bg-[#212634] rounded"><i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i></button>
+            <div class="flex items-center space-x-1 bg-[#090b12] p-1 rounded-lg border border-[#1c2438]">
+              <button onclick="zoom(1.15)" class="p-1 hover:text-white text-slate-400 hover:bg-[#141a2e] rounded"><i data-lucide="zoom-in" class="w-3.5 h-3.5"></i></button>
+              <button onclick="zoom(0.85)" class="p-1 hover:text-white text-slate-400 hover:bg-[#141a2e] rounded"><i data-lucide="zoom-out" class="w-3.5 h-3.5"></i></button>
+              <button onclick="zoomReset()" class="p-1 hover:text-white text-slate-400 hover:bg-[#141a2e] rounded"><i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i></button>
             </div>
           </div>
 
-          <!-- Document Render Frame -->
-          <div class="flex-1 bg-[#0b0d13] p-4 flex items-center justify-center overflow-auto relative">
-            <img id="docPreviewImg" src="/api/documents/L01/preview" alt="Invoice Rendering" class="max-h-full max-w-full object-contain shadow-xl rounded transition-transform duration-150" />
+          <!-- Document Render Frame & Dropzone -->
+          <div id="docViewerContainer" class="flex-1 bg-[#06080e] p-4 flex items-center justify-center overflow-auto relative border border-transparent transition-colors">
+            <div id="dropOverlay" class="absolute inset-0 bg-blue-950/90 border-2 border-dashed border-cyan-400 rounded-xl flex flex-col items-center justify-center hidden pointer-events-none z-20 backdrop-blur-sm">
+              <i data-lucide="upload-cloud" class="w-12 h-12 text-cyan-400 mb-2 animate-bounce"></i>
+              <span class="text-sm font-bold text-white">Drop file to extract instantly</span>
+              <span class="text-xs text-cyan-200 mt-1">PDF, JPG, JPEG, or PNG</span>
+            </div>
+            <img id="docPreviewImg" src="/api/documents/L01/preview" alt="Invoice Rendering" class="max-h-full max-w-full object-contain shadow-2xl rounded-lg transition-transform duration-150" />
           </div>
         </div>
 
         <!-- RIGHT: STRUCTURED DATA & VERIFICATION (7 Cols) -->
-        <div class="lg:col-span-7 card flex flex-col overflow-hidden">
-          
+        <div class="lg:col-span-7 glass-card flex flex-col overflow-hidden">
+
           <!-- View Tabs & Quick Actions -->
-          <div class="p-3 border-b border-[#2a3142] flex items-center justify-between text-xs">
-            <!-- Tabs -->
-            <div class="flex items-center space-x-1 bg-[#0f1117] p-0.5 rounded border border-[#2a3142]">
-              <button id="tabBtnFields" onclick="switchRightTab('fields')" class="px-3 py-1 rounded bg-[#212634] text-white font-medium">Summary Fields</button>
-              <button id="tabBtnItems" onclick="switchRightTab('items')" class="px-3 py-1 rounded text-slate-400 hover:text-white">Line Items Table (<span id="tabItemCountBadge">0</span>)</button>
-              <button id="tabBtnJson" onclick="switchRightTab('json')" class="px-3 py-1 rounded text-slate-400 hover:text-white">Raw JSON</button>
+          <div class="p-3.5 border-b border-[#1c2438] flex items-center justify-between text-xs">
+            <div class="flex items-center space-x-1 bg-[#090b12] p-1 rounded-xl border border-[#1c2438]">
+              <button id="tabBtnFields" onclick="switchRightTab('fields')" class="px-3.5 py-1.5 rounded-lg bg-[#182038] text-white font-medium border border-cyan-500/30">Summary Fields</button>
+              <button id="tabBtnItems" onclick="switchRightTab('items')" class="px-3.5 py-1.5 rounded-lg text-slate-400 hover:text-white">Line Items (<span id="tabItemCountBadge">0</span>)</button>
+              <button id="tabBtnJson" onclick="switchRightTab('json')" class="px-3.5 py-1.5 rounded-lg text-slate-400 hover:text-white">Raw JSON</button>
             </div>
 
-            <!-- Export Buttons -->
             <div class="flex items-center space-x-2">
-              <button onclick="downloadDocumentJson()" class="bg-[#212634] hover:bg-[#2a3142] border border-[#2a3142] text-slate-200 text-xs px-2.5 py-1 rounded flex items-center space-x-1">
-                <i data-lucide="download" class="w-3 h-3"></i>
+              <button onclick="downloadDocumentJson()" class="bg-[#141a2e] hover:bg-[#1a233d] border border-[#1c2438] text-slate-200 text-xs px-3 py-1.5 rounded-xl flex items-center space-x-1.5 transition">
+                <i data-lucide="download" class="w-3.5 h-3.5"></i>
                 <span>JSON</span>
               </button>
-              <a href="/api/export/excel" class="bg-[#212634] hover:bg-[#2a3142] border border-[#2a3142] text-slate-200 text-xs px-2.5 py-1 rounded flex items-center space-x-1">
-                <i data-lucide="file-spreadsheet" class="w-3 h-3 text-emerald-400"></i>
+              <a href="/api/export/excel" class="bg-[#141a2e] hover:bg-[#1a233d] border border-[#1c2438] text-slate-200 text-xs px-3 py-1.5 rounded-xl flex items-center space-x-1.5 transition">
+                <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5 text-emerald-400"></i>
                 <span>Excel</span>
               </a>
             </div>
           </div>
 
           <!-- Right Content Body -->
-          <div class="flex-1 overflow-auto p-4 space-y-4">
+          <div class="flex-1 overflow-auto p-5 space-y-4">
 
             <!-- Non-Invoice Explanatory Banner -->
-            <div id="bannerNonInvoice" class="hidden bg-sky-950/40 border border-sky-800/80 p-3.5 rounded text-xs text-sky-200 flex items-start space-x-3">
-              <i data-lucide="info" class="w-4 h-4 text-sky-400 mt-0.5 shrink-0"></i>
+            <div id="bannerNonInvoice" class="hidden bg-sky-950/40 border border-sky-500/40 p-4 rounded-xl text-xs text-sky-200 flex items-start space-x-3">
+              <i data-lucide="info" class="w-5 h-5 text-cyan-400 shrink-0 mt-0.5"></i>
               <div>
-                <strong class="font-semibold text-white">NON-INVOICE DOCUMENT CLASSIFICATION</strong>
-                <p class="text-sky-300 mt-0.5">This document was accurately identified as a Purchase Order, Statement, or Letter. Per assignment schema rules: <code class="bg-sky-900/60 px-1.5 py-0.5 rounded text-white font-mono">"is_invoice": false</code> and all remaining 7 fields (<code class="text-sky-200">vendor, invoice_number, invoice_date, currency, line_items, tax_total, total</code>) are strictly set to <code class="text-white">null</code>.</p>
+                <strong class="font-bold text-white text-sm">NON-INVOICE DOCUMENT DETECTED</strong>
+                <p class="text-sky-200 mt-1">This document is classified as a Purchase Order, Statement, or Letter. Per assignment schema rules: <code class="bg-sky-900/60 px-1.5 py-0.5 rounded text-white font-mono">"is_invoice": false</code> and all remaining 7 fields (<code class="text-sky-300">vendor, invoice_number, invoice_date, currency, line_items, tax_total, total</code>) are strictly set to <code class="text-white">null</code>.</p>
               </div>
             </div>
 
             <!-- Validation Status Bar -->
-            <div id="bannerValidation" class="bg-emerald-950/40 border border-emerald-800/80 p-3 rounded flex items-center justify-between text-xs">
+            <div id="bannerValidation" class="bg-emerald-950/40 border border-emerald-500/40 p-3.5 rounded-xl flex items-center justify-between text-xs">
               <div class="flex items-center space-x-2 text-emerald-300">
                 <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400"></i>
-                <span id="validationText" class="font-medium">Schema Conformed & Arithmetic Balanced</span>
+                <span id="validationText" class="font-semibold">Schema Validated & Arithmetic Reconciled</span>
               </div>
-              <div id="mathDiffBadge" class="font-mono text-[11px] text-emerald-400 bg-emerald-900/40 px-2 py-0.5 rounded font-bold">
+              <div id="mathDiffBadge" class="font-mono text-xs text-emerald-400 bg-emerald-900/50 border border-emerald-500/30 px-2.5 py-1 rounded-lg font-bold">
                 DIFF &plusmn;0.00
               </div>
             </div>
 
             <!-- TAB 1: SUMMARY FIELDS VIEW -->
             <div id="viewFields" class="space-y-4">
-              <!-- Field Grid -->
-              <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-                <div class="bg-[#12141c] border border-[#2a3142] p-3 rounded">
-                  <div class="text-[10px] text-slate-400 uppercase font-mono">Vendor (Seller)</div>
-                  <div id="fldVendor" class="text-sm font-semibold text-white mt-0.5 truncate">—</div>
+              <div class="grid grid-cols-2 md:grid-cols-3 gap-3.5">
+                <div class="bg-[#0e121d] border border-[#1c2438] p-3.5 rounded-xl">
+                  <div class="text-[10px] text-slate-400 uppercase font-mono tracking-wider">Vendor (Seller)</div>
+                  <div id="fldVendor" class="text-sm font-bold text-white mt-1 truncate">—</div>
                 </div>
-                <div class="bg-[#12141c] border border-[#2a3142] p-3 rounded">
-                  <div class="text-[10px] text-slate-400 uppercase font-mono">Invoice Number</div>
-                  <div id="fldInvNum" class="text-sm font-semibold font-mono text-blue-400 mt-0.5 truncate">—</div>
+                <div class="bg-[#0e121d] border border-[#1c2438] p-3.5 rounded-xl">
+                  <div class="text-[10px] text-slate-400 uppercase font-mono tracking-wider">Invoice Number</div>
+                  <div id="fldInvNum" class="text-sm font-bold font-mono text-cyan-400 mt-1 truncate">—</div>
                 </div>
-                <div class="bg-[#12141c] border border-[#2a3142] p-3 rounded">
-                  <div class="text-[10px] text-slate-400 uppercase font-mono">Issue Date (ISO 8601)</div>
-                  <div id="fldDate" class="text-sm font-semibold font-mono text-white mt-0.5">—</div>
+                <div class="bg-[#0e121d] border border-[#1c2438] p-3.5 rounded-xl">
+                  <div class="text-[10px] text-slate-400 uppercase font-mono tracking-wider">Issue Date (ISO)</div>
+                  <div id="fldDate" class="text-sm font-bold font-mono text-white mt-1">—</div>
                 </div>
-                <div class="bg-[#12141c] border border-[#2a3142] p-3 rounded">
-                  <div class="text-[10px] text-slate-400 uppercase font-mono">Currency Code</div>
-                  <div id="fldCurrency" class="text-sm font-semibold font-mono text-emerald-400 mt-0.5">—</div>
+                <div class="bg-[#0e121d] border border-[#1c2438] p-3.5 rounded-xl">
+                  <div class="text-[10px] text-slate-400 uppercase font-mono tracking-wider">Currency</div>
+                  <div id="fldCurrency" class="text-sm font-bold font-mono text-emerald-400 mt-1">—</div>
                 </div>
-                <div class="bg-[#12141c] border border-[#2a3142] p-3 rounded">
-                  <div class="text-[10px] text-slate-400 uppercase font-mono">Tax Total</div>
-                  <div id="fldTax" class="text-sm font-semibold font-mono text-white mt-0.5">—</div>
+                <div class="bg-[#0e121d] border border-[#1c2438] p-3.5 rounded-xl">
+                  <div class="text-[10px] text-slate-400 uppercase font-mono tracking-wider">Tax Total</div>
+                  <div id="fldTax" class="text-sm font-bold font-mono text-white mt-1">—</div>
                 </div>
-                <div class="bg-[#12141c] border border-[#2a3142] p-3 rounded">
-                  <div class="text-[10px] text-slate-400 uppercase font-mono">Grand Total Due</div>
-                  <div id="fldTotal" class="text-sm font-semibold font-mono text-white mt-0.5">—</div>
+                <div class="bg-[#0e121d] border border-[#1c2438] p-3.5 rounded-xl">
+                  <div class="text-[10px] text-slate-400 uppercase font-mono tracking-wider">Grand Total Due</div>
+                  <div id="fldTotal" class="text-sm font-bold font-mono text-cyan-400 mt-1">—</div>
                 </div>
               </div>
 
-              <!-- Quick Line Items Table Preview -->
+              <!-- Line Items Preview -->
               <div class="space-y-2">
                 <div class="flex items-center justify-between text-xs text-slate-400">
-                  <span class="font-medium text-slate-300">Line Items Preview</span>
-                  <button onclick="switchRightTab('items')" class="text-blue-400 hover:underline">View All &rarr;</button>
+                  <span class="font-semibold text-slate-300">Extracted Line Items Preview</span>
+                  <button onclick="switchRightTab('items')" class="text-cyan-400 hover:underline">View All &rarr;</button>
                 </div>
-                <div class="border border-[#2a3142] rounded overflow-hidden">
+                <div class="border border-[#1c2438] rounded-xl overflow-hidden">
                   <table class="w-full text-left text-xs font-mono">
-                    <thead class="bg-[#12141c] text-slate-400 border-b border-[#2a3142]">
+                    <thead class="bg-[#0e121d] text-slate-400 border-b border-[#1c2438]">
                       <tr>
-                        <th class="p-2.5">Description</th>
-                        <th class="p-2.5 text-right">Qty</th>
-                        <th class="p-2.5 text-right">Row Amount</th>
+                        <th class="p-3">Description</th>
+                        <th class="p-3 text-right">Qty</th>
+                        <th class="p-3 text-right">Amount</th>
                       </tr>
                     </thead>
-                    <tbody id="quickItemsBody" class="divide-y divide-[#2a3142] bg-[#1a1e29]">
-                      <!-- Injected -->
+                    <tbody id="quickItemsBody" class="divide-y divide-[#1c2438] bg-[#111526]/50">
+                      <!-- Injected dynamically -->
                     </tbody>
                   </table>
                 </div>
@@ -303,18 +354,18 @@
 
             <!-- TAB 2: COMPLETE LINE ITEMS TABLE -->
             <div id="viewItems" class="hidden space-y-2">
-              <div class="border border-[#2a3142] rounded overflow-hidden">
+              <div class="border border-[#1c2438] rounded-xl overflow-hidden">
                 <table class="w-full text-left text-xs font-mono">
-                  <thead class="bg-[#12141c] text-slate-400 border-b border-[#2a3142]">
+                  <thead class="bg-[#0e121d] text-slate-400 border-b border-[#1c2438]">
                     <tr>
-                      <th class="p-2.5">#</th>
-                      <th class="p-2.5">Item Description</th>
-                      <th class="p-2.5 text-right">Quantity</th>
-                      <th class="p-2.5 text-right">Amount</th>
+                      <th class="p-3">#</th>
+                      <th class="p-3">Item Description</th>
+                      <th class="p-3 text-right">Quantity</th>
+                      <th class="p-3 text-right">Row Amount</th>
                     </tr>
                   </thead>
-                  <tbody id="fullItemsBody" class="divide-y divide-[#2a3142]">
-                    <!-- Injected -->
+                  <tbody id="fullItemsBody" class="divide-y divide-[#1c2438] bg-[#111526]/50">
+                    <!-- Injected dynamically -->
                   </tbody>
                 </table>
               </div>
@@ -323,13 +374,13 @@
             <!-- TAB 3: RAW JSON CODE VIEW -->
             <div id="viewJson" class="hidden space-y-2">
               <div class="flex items-center justify-between text-xs text-slate-400 font-mono">
-                <span>Schema-Compliant JSON Output</span>
-                <button onclick="copyJson()" class="text-blue-400 hover:underline flex items-center space-x-1">
+                <span>Normalized Schema Output</span>
+                <button onclick="copyJson()" class="text-cyan-400 hover:underline flex items-center space-x-1">
                   <i data-lucide="copy" class="w-3.5 h-3.5"></i>
-                  <span>Copy</span>
+                  <span>Copy Payload</span>
                 </button>
               </div>
-              <pre class="bg-[#0b0d13] border border-[#2a3142] p-4 rounded text-xs font-mono text-emerald-400 overflow-auto max-h-[500px]"><code id="rawJsonCode">{}</code></pre>
+              <pre class="bg-[#06080e] border border-[#1c2438] p-4 rounded-xl text-xs font-mono text-cyan-300 overflow-auto max-h-[500px]"><code id="rawJsonCode">{}</code></pre>
             </div>
 
           </div>
@@ -340,47 +391,86 @@
     </div>
 
     <!-- ========================================================= -->
-    <!-- PAGE 2: BATCH PROCESSING (BULK EXTRACTION & EXCEL EXPORT) -->
+    <!-- PAGE 2: BATCH INGESTION (MULTI-FILE DRAG & DROP HUB)      -->
     <!-- ========================================================= -->
-    <div id="pageBatch" class="hidden space-y-4">
-      <div class="card p-5 space-y-4">
-        <div class="flex items-center justify-between">
+    <div id="pageBatch" class="hidden space-y-5">
+      
+      <!-- BATCH MULTI-FILE DRAG & DROP ZONE -->
+      <div class="glass-card p-6">
+        <div class="flex items-center justify-between mb-4">
           <div>
-            <h2 class="text-base font-semibold text-white">Batch Extraction & Ledger Export</h2>
-            <p class="text-xs text-slate-400 mt-0.5">Extract all documents in bulk and download clean multi-tab Excel sheets.</p>
+            <h2 class="text-lg font-bold text-white flex items-center space-x-2">
+              <i data-lucide="upload-cloud" class="w-5 h-5 text-cyan-400"></i>
+              <span>Batch Ingestion Hub (New & Unseen Documents)</span>
+            </h2>
+            <p class="text-xs text-slate-400 mt-1">Drag and drop arbitrary batches of new invoices or choose from system sample packs.</p>
           </div>
-          <!-- Action Buttons -->
+          
           <div class="flex items-center space-x-2">
-            <button onclick="runBatchAll()" id="btnRunBatchAll" class="bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs px-4 py-2 rounded shadow flex items-center space-x-1.5 transition">
-              <i data-lucide="play" class="w-3.5 h-3.5 fill-current"></i>
-              <span>Extract All 20 Documents</span>
+            <button onclick="extractAllBatch()" id="btnExtractAllBatch" class="btn-cyan text-slate-950 font-bold text-xs px-5 py-2.5 rounded-xl shadow flex items-center space-x-1.5 transition">
+              <i data-lucide="play" class="w-4 h-4 fill-current"></i>
+              <span>Extract Entire Batch</span>
             </button>
-            <a href="/api/export/excel" class="bg-emerald-700 hover:bg-emerald-600 text-white font-medium text-xs px-4 py-2 rounded shadow flex items-center space-x-1.5 transition">
-              <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i>
+            <a href="/api/export/excel" class="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-semibold text-xs px-4 py-2.5 rounded-xl shadow flex items-center space-x-1.5 transition">
+              <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
               <span>Download Excel (.xlsx)</span>
             </a>
-            <a href="/api/export/zip" class="bg-[#212634] hover:bg-[#2a3142] border border-[#2a3142] text-slate-200 font-medium text-xs px-3 py-2 rounded flex items-center space-x-1.5 transition">
-              <i data-lucide="archive" class="w-3.5 h-3.5"></i>
+            <a href="/api/export/zip" class="bg-[#141a2e] hover:bg-[#1a233d] border border-[#1c2438] text-slate-200 font-semibold text-xs px-4 py-2.5 rounded-xl flex items-center space-x-1.5 transition">
+              <i data-lucide="archive" class="w-4 h-4"></i>
               <span>Download All JSON (.zip)</span>
             </a>
           </div>
         </div>
 
-        <!-- Progress Indicator -->
-        <div id="batchProgressContainer" class="hidden space-y-1.5">
-          <div class="flex justify-between text-xs text-slate-400 font-mono">
-            <span id="batchProgressStatus">Processing documents...</span>
-            <span id="batchProgressPercent">0%</span>
-          </div>
-          <div class="w-full bg-[#12141c] rounded-full h-2 overflow-hidden border border-[#2a3142]">
-            <div id="batchProgressBar" class="bg-blue-600 h-2 transition-all duration-200" style="width: 0%"></div>
+        <!-- Multi-file Drop Area -->
+        <div id="batchDropZone" class="border-2 border-dashed border-[#242f4c] hover:border-cyan-400/80 rounded-2xl p-8 text-center bg-[#090b14]/60 transition-all cursor-pointer relative group">
+          <input type="file" id="batchMultiFileInput" multiple accept=".pdf,.png,.jpg,.jpeg" onchange="handleBatchFilesSelected(event)" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10" />
+          
+          <div class="flex flex-col items-center justify-center space-y-2 pointer-events-none">
+            <div class="w-14 h-14 rounded-2xl bg-[#141a2e] border border-cyan-500/30 flex items-center justify-center text-cyan-400 group-hover:scale-110 transition-transform">
+              <i data-lucide="folder-up" class="w-7 h-7"></i>
+            </div>
+            <div class="text-sm font-semibold text-white">
+              Drop multiple invoice files (PDFs, Images) here, or <span class="text-cyan-400 underline">browse your disk</span>
+            </div>
+            <div class="text-xs text-slate-400 font-mono">
+              Accepts 5, 20, 50+ files at once • Automatic OCR & Layout Parsing
+            </div>
           </div>
         </div>
 
-        <!-- Batch Results Table -->
-        <div class="border border-[#2a3142] rounded overflow-hidden">
+        <!-- Selected Files Chips Area -->
+        <div id="batchQueuedFilesArea" class="hidden mt-4 pt-4 border-t border-[#1c2438] space-y-2">
+          <div class="flex items-center justify-between text-xs">
+            <span class="text-slate-300 font-semibold">Queued Files (<span id="batchQueuedCount">0</span> selected)</span>
+            <button onclick="clearBatchQueue()" class="text-rose-400 hover:underline">Clear Queue</button>
+          </div>
+          <div id="batchFileChips" class="flex flex-wrap gap-2 max-h-36 overflow-auto p-2 bg-[#06080e] rounded-xl border border-[#1c2438]">
+            <!-- File chips injected here -->
+          </div>
+        </div>
+
+        <!-- Batch Execution Progress Bar -->
+        <div id="batchProgressContainer" class="hidden mt-5 space-y-2">
+          <div class="flex justify-between text-xs text-slate-300 font-mono">
+            <span id="batchProgressStatus" class="font-semibold text-cyan-400">Processing document 1 of 20...</span>
+            <span id="batchProgressPercent" class="font-bold">0%</span>
+          </div>
+          <div class="w-full bg-[#0e121d] rounded-full h-2.5 overflow-hidden border border-[#1c2438]">
+            <div id="batchProgressBar" class="bg-gradient-to-r from-cyan-400 via-blue-500 to-indigo-600 h-2.5 transition-all duration-200" style="width: 0%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Batch Ledger Table -->
+      <div class="glass-card p-5 space-y-3">
+        <div class="flex items-center justify-between">
+          <span class="text-sm font-bold text-white">Extracted Document Ledger</span>
+          <span class="text-xs text-slate-400 font-mono" id="batchTotalCountLabel">20 Documents Processed</span>
+        </div>
+        <div class="border border-[#1c2438] rounded-xl overflow-hidden">
           <table class="w-full text-left text-xs font-mono">
-            <thead class="bg-[#12141c] text-slate-400 border-b border-[#2a3142]">
+            <thead class="bg-[#0e121d] text-slate-400 border-b border-[#1c2438]">
               <tr>
                 <th class="p-3">Doc ID</th>
                 <th class="p-3">File Name</th>
@@ -393,59 +483,238 @@
                 <th class="p-3 text-center">Status</th>
               </tr>
             </thead>
-            <tbody id="batchTableBody" class="divide-y divide-[#2a3142]">
-              <!-- Populated dynamically -->
+            <tbody id="batchTableBody" class="divide-y divide-[#1c2438] bg-[#111526]/40">
+              <!-- Dynamically populated -->
             </tbody>
           </table>
         </div>
       </div>
+
     </div>
 
     <!-- ========================================================= -->
-    <!-- PAGE 3: ANALYTICS & BENCHMARKING (EVAL HARNESS) -->
+    <!-- PAGE 3: TEMPLATE STUDIO (CUSTOM DEFINED EXTRACTIONS)      -->
     <!-- ========================================================= -->
-    <div id="pageAnalytics" class="hidden space-y-4">
+    <div id="pageTemplates" class="hidden space-y-5">
+
+      <!-- Studio Header -->
+      <div class="glass-card p-6 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h2 class="text-lg font-bold text-white flex items-center space-x-2">
+            <i data-lucide="sparkles" class="w-5 h-5 text-amber-400"></i>
+            <span>Dynamic Template Studio & Custom Field Definition</span>
+          </h2>
+          <p class="text-xs text-slate-400 mt-1">Upload any unique document, auto-discover all entities, select custom fields, and save reusable OCR templates.</p>
+        </div>
+
+        <!-- Saved Templates Selector -->
+        <div class="flex items-center space-x-3">
+          <span class="text-xs text-slate-400 font-mono">Active Template:</span>
+          <select id="studioTemplateSelect" onchange="onTemplateSelectChange()" class="bg-[#090b12] border border-[#1c2438] text-xs text-white rounded-xl px-3 py-2 font-mono focus:border-amber-400">
+            <!-- Saved templates injected -->
+          </select>
+          <button onclick="createNewTemplateDraft()" class="bg-[#141a2e] hover:bg-[#1a233d] border border-[#1c2438] text-amber-300 text-xs px-3.5 py-2 rounded-xl flex items-center space-x-1 transition">
+            <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+            <span>New Template</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Studio Main Split: Sample Intake (Left) & Field Builder (Right) -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 min-h-[600px]">
+        
+        <!-- Left: Upload Sample Document for Template Discovery -->
+        <div class="lg:col-span-5 glass-card p-5 flex flex-col space-y-4">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-300 uppercase font-mono">1. Document Intake for Discovery</span>
+            <span class="text-[11px] text-cyan-400 font-mono" id="studioDocStatus">Ready</span>
+          </div>
+
+          <!-- Document Upload Box -->
+          <div class="border-2 border-dashed border-[#1c2438] hover:border-amber-400/60 rounded-xl p-6 text-center bg-[#06080e] relative cursor-pointer group">
+            <input type="file" id="studioDocInput" accept=".pdf,.png,.jpg,.jpeg" onchange="handleStudioDocUpload(event)" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10" />
+            <div class="flex flex-col items-center justify-center space-y-1.5 pointer-events-none">
+              <i data-lucide="file-search" class="w-8 h-8 text-amber-400 mb-1 group-hover:scale-110 transition-transform"></i>
+              <span class="text-xs font-semibold text-white">Upload sample document to analyze</span>
+              <span class="text-[11px] text-slate-400">PDF, JPG, or PNG</span>
+            </div>
+          </div>
+
+          <!-- Or choose from existing sample -->
+          <div class="flex items-center space-x-2 text-xs">
+            <span class="text-slate-400">Or pick sample:</span>
+            <select id="studioSampleSelect" class="bg-[#090b12] border border-[#1c2438] text-xs text-white rounded-lg px-2 py-1 flex-1 font-mono">
+              <option value="L01">L01 — Digital Invoice</option>
+              <option value="L02">L02 — Phone Photo Receipt</option>
+              <option value="L04">L04 — Dense Multi-Item Invoice</option>
+              <option value="L08">L08 — Purchase Order</option>
+              <option value="U01">U01 — Unlabelled Sample</option>
+            </select>
+            <button onclick="discoverFromSelectedSample()" class="bg-[#141a2e] hover:bg-[#1a233d] border border-[#1c2438] text-xs text-slate-200 px-3 py-1 rounded-lg">
+              Analyze
+            </button>
+          </div>
+
+          <!-- Discovery Scan Button -->
+          <button id="btnDiscoverFields" onclick="triggerDiscovery()" class="btn-cyan text-slate-950 font-bold text-xs py-2.5 rounded-xl flex items-center justify-center space-x-2">
+            <i data-lucide="scan" class="w-4 h-4"></i>
+            <span>Scan & Auto-Discover All Fields</span>
+          </button>
+
+          <!-- Raw OCR Text Preview -->
+          <div class="flex-1 flex flex-col space-y-1.5 overflow-hidden">
+            <span class="text-[11px] text-slate-400 font-mono">Detected Raw Text Sample:</span>
+            <pre id="studioRawTextPreview" class="flex-1 bg-[#06080e] border border-[#1c2438] p-3 rounded-xl text-[11px] font-mono text-slate-400 overflow-auto max-h-[220px]">Upload or select a document to inspect OCR text...</pre>
+          </div>
+        </div>
+
+        <!-- Right: Field Selector & Custom Schema Builder -->
+        <div class="lg:col-span-7 glass-card p-5 flex flex-col space-y-4">
+          <div class="flex items-center justify-between border-b border-[#1c2438] pb-3">
+            <div>
+              <span class="text-xs font-bold text-slate-300 uppercase font-mono">2. Custom Field Selection & Schema</span>
+              <p class="text-[11px] text-slate-400 mt-0.5">Toggle fields to include in your output template, or add custom fields below.</p>
+            </div>
+            
+            <button onclick="saveCurrentTemplate()" class="btn-gradient text-white font-bold text-xs px-4 py-2 rounded-xl flex items-center space-x-1.5 shadow">
+              <i data-lucide="save" class="w-3.5 h-3.5"></i>
+              <span>Save Template</span>
+            </button>
+          </div>
+
+          <!-- Template Metadata Form -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 bg-[#0e121d] p-3 rounded-xl border border-[#1c2438]">
+            <div>
+              <label class="text-[11px] text-slate-400 font-mono">Template Name</label>
+              <input type="text" id="inputTemplateName" placeholder="e.g. Amazon Logistics Invoice" class="w-full bg-[#06080e] border border-[#1c2438] text-xs text-white p-2 rounded-lg mt-1 font-mono focus:border-amber-400 focus:outline-none" />
+            </div>
+            <div>
+              <label class="text-[11px] text-slate-400 font-mono">Description / Notes</label>
+              <input type="text" id="inputTemplateDesc" placeholder="e.g. Extracts PO, Freight, and Tax ID" class="w-full bg-[#06080e] border border-[#1c2438] text-xs text-white p-2 rounded-lg mt-1 font-mono focus:border-amber-400 focus:outline-none" />
+            </div>
+          </div>
+
+          <!-- Add Arbitrary Custom Field -->
+          <div class="flex items-center space-x-2 bg-[#090b12] p-2 rounded-xl border border-[#1c2438]">
+            <input type="text" id="customFieldKey" placeholder="Field Key (e.g. shipping_tracking_num)" class="bg-transparent text-xs text-white p-1.5 font-mono focus:outline-none flex-1" />
+            <input type="text" id="customFieldLabel" placeholder="Display Label (e.g. Tracking #)" class="bg-transparent text-xs text-white p-1.5 font-mono focus:outline-none flex-1" />
+            <button onclick="addCustomFieldRow()" class="bg-[#141a2e] hover:bg-[#1a233d] border border-[#1c2438] text-amber-300 text-xs px-3 py-1.5 rounded-lg flex items-center space-x-1">
+              <i data-lucide="plus" class="w-3 h-3"></i>
+              <span>Add Field</span>
+            </button>
+          </div>
+
+          <!-- Discovered & Selected Fields Table -->
+          <div class="flex-1 overflow-auto border border-[#1c2438] rounded-xl max-h-[340px]">
+            <table class="w-full text-left text-xs font-mono">
+              <thead class="bg-[#0e121d] text-slate-400 border-b border-[#1c2438] sticky top-0">
+                <tr>
+                  <th class="p-3 w-12 text-center">Include</th>
+                  <th class="p-3">Field Key</th>
+                  <th class="p-3">Display Label</th>
+                  <th class="p-3">Sample Value</th>
+                  <th class="p-3 text-center">Type</th>
+                </tr>
+              </thead>
+              <tbody id="studioFieldsTableBody" class="divide-y divide-[#1c2438] bg-[#111526]/50">
+                <tr>
+                  <td colspan="5" class="p-6 text-center text-slate-500">
+                    Click "Scan & Auto-Discover All Fields" to inspect document entities.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Test Extraction with Template Button -->
+          <div class="pt-2 flex items-center justify-between border-t border-[#1c2438]">
+            <span id="studioSaveNotice" class="text-xs text-emerald-400 font-semibold font-mono"></span>
+            <button onclick="testExtractWithTemplate()" id="btnTestTemplateExtract" class="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow flex items-center space-x-1.5">
+              <i data-lucide="play" class="w-3.5 h-3.5 fill-current"></i>
+              <span>Extract Document Using This Template</span>
+            </button>
+          </div>
+
+          <!-- Custom Extraction Output Modal/Block -->
+          <div id="studioCustomOutputContainer" class="hidden space-y-2 pt-2 border-t border-[#1c2438]">
+            <div class="flex items-center justify-between text-xs">
+              <span class="font-bold text-white flex items-center space-x-1 text-cyan-400">
+                <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
+                <span>Custom Extracted Record</span>
+              </span>
+              <button onclick="downloadCustomJson()" class="text-xs text-cyan-400 hover:underline">Download JSON</button>
+            </div>
+            <pre class="bg-[#06080e] border border-[#1c2438] p-3 rounded-xl text-xs font-mono text-cyan-300 max-h-[180px] overflow-auto"><code id="studioCustomOutputCode">{}</code></pre>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- PAGE 4: ANALYTICS & AP GAUGE (STRIKE METRICS)             -->
+    <!-- ========================================================= -->
+    <div id="pageAnalytics" class="hidden space-y-5">
       
       <!-- Top Action Bar -->
-      <div class="card p-4 flex items-center justify-between">
+      <div class="glass-card p-5 flex items-center justify-between">
         <div>
-          <h2 class="text-base font-semibold text-white">Evaluation Benchmark & Field Accuracy</h2>
-          <p class="text-xs text-slate-400 mt-0.5">Automated field-by-field verification against the 10 labelled ground-truth answers (`L01` through `L10`).</p>
+          <h2 class="text-base font-bold text-white">Evaluation Benchmark & Field Accuracy</h2>
+          <p class="text-xs text-slate-400 mt-0.5">Automated field-by-field verification against the 10 labelled
+            ground-truth answers (`L01` through `L10`).</p>
         </div>
-        <button onclick="triggerBenchmark()" id="btnTriggerBenchmark" class="bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs px-4 py-2 rounded shadow flex items-center space-x-1.5 transition">
-          <i data-lucide="activity" class="w-3.5 h-3.5"></i>
+        <button onclick="triggerBenchmark()" id="btnTriggerBenchmark" class="btn-cyan text-slate-950 font-bold text-xs px-5 py-2.5 rounded-xl shadow flex items-center space-x-1.5 transition">
+          <i data-lucide="activity" class="w-4 h-4"></i>
           <span>Run 10-Document Benchmark</span>
         </button>
       </div>
 
-      <!-- Benchmark Summary Row -->
+      <!-- Benchmark Summary Row (Strike Circular Gauge + Metrics) -->
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div class="card p-4">
-          <div class="text-xs text-slate-400">Aggregate Field Accuracy</div>
-          <div id="benchOverallAcc" class="text-2xl font-bold font-mono text-emerald-400 mt-1">93.8%</div>
-          <div class="text-[11px] text-slate-500 mt-0.5">75 / 80 Fields Verified</div>
+        
+        <!-- Circular AP Straight-Through Gauge -->
+        <div class="glass-card p-5 flex items-center space-x-4">
+          <div class="relative w-20 h-20 shrink-0 flex items-center justify-center">
+            <svg class="w-20 h-20 -rotate-90">
+              <circle cx="40" cy="40" r="32" stroke="#1c2438" stroke-width="7" fill="transparent" />
+              <circle id="gaugeCircle" cx="40" cy="40" r="32" stroke="#00f0ff" stroke-width="7" stroke-dasharray="201" stroke-dashoffset="12" stroke-linecap="round" fill="transparent" class="transition-all duration-1000" />
+            </svg>
+            <div class="absolute inset-0 flex flex-col items-center justify-center">
+              <span id="benchOverallAcc" class="text-sm font-bold font-mono text-cyan-400">93.8%</span>
+            </div>
+          </div>
+          <div>
+            <div class="text-xs text-slate-400">Field Accuracy</div>
+            <div class="text-sm font-bold text-white mt-0.5">75 / 80 Fields</div>
+            <div class="text-[11px] text-emerald-400 font-mono mt-0.5">Verified vs GT</div>
+          </div>
         </div>
-        <div class="card p-4">
+
+        <div class="glass-card p-5">
           <div class="text-xs text-slate-400">Non-Invoice Precision</div>
-          <div class="text-2xl font-bold font-mono text-blue-400 mt-1">100.0%</div>
-          <div class="text-[11px] text-slate-500 mt-0.5">Purchase Orders & Statements Isolated</div>
+          <div class="text-2xl font-bold font-mono text-cyan-400 mt-1">100.0%</div>
+          <div class="text-[11px] text-slate-400 mt-0.5">Purchase Orders & Statements Isolated</div>
         </div>
-        <div class="card p-4">
+
+        <div class="glass-card p-5">
           <div class="text-xs text-slate-400">Date & Currency Accuracy</div>
           <div class="text-2xl font-bold font-mono text-emerald-400 mt-1">100.0%</div>
-          <div class="text-[11px] text-slate-500 mt-0.5">ISO 8601 & ISO 4217 Match</div>
+          <div class="text-[11px] text-slate-400 mt-0.5">ISO 8601 & ISO 4217 Match</div>
         </div>
-        <div class="card p-4">
+
+        <div class="glass-card p-5">
           <div class="text-xs text-slate-400">Final Total Precision</div>
-          <div class="text-2xl font-bold font-mono text-purple-400 mt-1">100.0%</div>
-          <div class="text-[11px] text-slate-500 mt-0.5">&plusmn;0.05 Arithmetic Tolerance</div>
+          <div class="text-2xl font-bold font-mono text-indigo-400 mt-1">100.0%</div>
+          <div class="text-[11px] text-slate-400 mt-0.5">&plusmn;0.05 Arithmetic Tolerance</div>
         </div>
       </div>
 
       <!-- Field Accuracy Bar Chart -->
-      <div class="card p-4">
-        <div class="flex items-center justify-between mb-3">
-          <span class="text-xs font-semibold text-slate-300">Field-Level Accuracy Breakdown</span>
+      <div class="glass-card p-5">
+        <div class="flex items-center justify-between mb-4">
+          <span class="text-xs font-bold text-slate-300">Field-Level Accuracy Breakdown</span>
           <span class="text-xs text-slate-400 font-mono">10 Document Test Suite</span>
         </div>
         <div class="h-64">
@@ -454,11 +723,11 @@
       </div>
 
       <!-- Ground Truth Matrix Table -->
-      <div class="card p-4 space-y-3">
-        <div class="text-xs font-semibold text-slate-300">Ground Truth Verification Matrix</div>
-        <div class="border border-[#2a3142] rounded overflow-hidden">
+      <div class="glass-card p-5 space-y-3">
+        <div class="text-xs font-bold text-slate-300">Ground Truth Verification Matrix</div>
+        <div class="border border-[#1c2438] rounded-xl overflow-hidden">
           <table class="w-full text-left text-xs font-mono">
-            <thead class="bg-[#12141c] text-slate-400 border-b border-[#2a3142]">
+            <thead class="bg-[#0e121d] text-slate-400 border-b border-[#1c2438]">
               <tr>
                 <th class="p-2.5">Doc ID</th>
                 <th class="p-2.5">File Name</th>
@@ -472,7 +741,7 @@
                 <th class="p-2.5 text-center">total</th>
               </tr>
             </thead>
-            <tbody id="groundTruthMatrixBody" class="divide-y divide-[#2a3142]">
+            <tbody id="groundTruthMatrixBody" class="divide-y divide-[#1c2438] bg-[#111526]/50">
               <!-- Populated -->
             </tbody>
           </table>
@@ -482,150 +751,187 @@
     </div>
 
     <!-- ========================================================= -->
-    <!-- PAGE 4: MCP & LOCAL ENGINES (AGENTS & HARNESS INTEGRATION) -->
+    <!-- PAGE 5: MCP & LOCAL AI (PRIVACY & 3-WAY MATCHING)         -->
     <!-- ========================================================= -->
     <div id="pageMcp" class="hidden space-y-5">
-      <div class="card p-5 space-y-4">
+      <div class="glass-card p-6 space-y-5">
         <div>
-          <h2 class="text-base font-semibold text-white">Model Context Protocol (MCP) & Local Agent Harnesses</h2>
-          <p class="text-xs text-slate-400 mt-0.5">Architecture, security, and tool capabilities when extending beyond pure rule engines.</p>
+          <h2 class="text-base font-bold text-white">Model Context Protocol (MCP) & Local Agent Harnesses</h2>
+          <p class="text-xs text-slate-400 mt-0.5">Enterprise architecture, security, and tool capabilities when extending beyond pure rule engines.</p>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div class="bg-[#12141c] border border-[#2a3142] p-4 rounded space-y-2">
-            <div class="flex items-center space-x-2 text-emerald-400 text-sm font-semibold">
-              <i data-lucide="shield-check" class="w-4 h-4"></i>
+          <div class="bg-[#0e121d] border border-[#1c2438] p-5 rounded-2xl space-y-2">
+            <div class="flex items-center space-x-2 text-emerald-400 text-sm font-bold">
+              <i data-lucide="shield-check" class="w-5 h-5"></i>
               <span>100% Air-Gapped Privacy</span>
             </div>
-            <p class="text-xs text-slate-400 leading-relaxed">Financial vendor invoices contain sensitive banking, GSTIN, and commercial terms. Running local models via Ollama or Nous Hermes ensures zero customer or accounting data leaves company firewalls, fulfilling GDPR, HIPAA, and SOC-2 requirements.</p>
+            <p class="text-xs text-slate-400 leading-relaxed">Financial vendor invoices contain sensitive banking,
+              GSTIN, and commercial terms. Running local models via Ollama or Nous Hermes ensures zero customer or
+              accounting data leaves company firewalls, fulfilling GDPR, HIPAA, and SOC-2 requirements.</p>
           </div>
 
-          <div class="bg-[#12141c] border border-[#2a3142] p-4 rounded space-y-2">
-            <div class="flex items-center space-x-2 text-blue-400 text-sm font-semibold">
-              <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+          <div class="bg-[#0e121d] border border-[#1c2438] p-5 rounded-2xl space-y-2">
+            <div class="flex items-center space-x-2 text-cyan-400 text-sm font-bold">
+              <i data-lucide="refresh-cw" class="w-5 h-5"></i>
               <span>Self-Correction Reasoning</span>
             </div>
-            <p class="text-xs text-slate-400 leading-relaxed">When an invoice contains messy OCR noise or arithmetic rounding mismatches, an autonomous agent inspects the validator's feedback, reasons through the error, and autonomously repairs table alignments before outputting final records.</p>
+            <p class="text-xs text-slate-400 leading-relaxed">When an invoice contains messy OCR noise or arithmetic
+              rounding mismatches, an autonomous agent inspects the validator's feedback, reasons through the error, and
+              autonomously repairs table alignments before outputting final records.</p>
           </div>
 
-          <div class="bg-[#12141c] border border-[#2a3142] p-4 rounded space-y-2">
-            <div class="flex items-center space-x-2 text-purple-400 text-sm font-semibold">
-              <i data-lucide="network" class="w-4 h-4"></i>
+          <div class="bg-[#0e121d] border border-[#1c2438] p-5 rounded-2xl space-y-2">
+            <div class="flex items-center space-x-2 text-indigo-400 text-sm font-bold">
+              <i data-lucide="network" class="w-5 h-5"></i>
               <span>MCP 3-Way ERP Reconciliation</span>
             </div>
-            <p class="text-xs text-slate-400 leading-relaxed">Exposes standard Model Context Protocol (MCP) tool endpoints allowing external coding agents (Claude, OpenCode, Hermes, Antigravity) to query purchase orders in SAP/QuickBooks/Postgres, cross-checking prices against invoice totals.</p>
+            <p class="text-xs text-slate-400 leading-relaxed">Exposes standard Model Context Protocol (MCP) tool
+              endpoints allowing external coding agents (Claude, OpenCode, Hermes, Antigravity) to query purchase orders
+              in SAP/QuickBooks/Postgres, cross-checking prices against invoice totals.</p>
           </div>
         </div>
 
         <!-- MCP Tool Definitions View -->
         <div class="space-y-2 pt-2">
           <div class="text-xs font-semibold text-slate-300">Exposed MCP Tools Manifest (Standard JSON-RPC Endpoint: <code>/api/mcp/manifest</code>)</div>
-          <pre class="bg-[#0b0d13] border border-[#2a3142] p-4 rounded text-xs font-mono text-blue-300 overflow-auto max-h-[350px]"><code id="mcpManifestBlock">Loading MCP Manifest...</code></pre>
+          <pre class="bg-[#06080e] border border-[#1c2438] p-4 rounded-xl text-xs font-mono text-cyan-300 overflow-auto max-h-[350px]"><code id="mcpManifestBlock">Loading MCP Manifest...</code></pre>
         </div>
       </div>
     </div>
 
     <!-- ========================================================= -->
-    <!-- PAGE 5: API KEYS & STORE (LIVE TEST & SAVE CAPABILITY) -->
+    <!-- PAGE 6: SECURITY & API STORE (PII SHIELD & KEYS)          -->
     <!-- ========================================================= -->
     <div id="pageSettings" class="hidden space-y-5">
-      <div class="card p-5 space-y-6 max-w-4xl">
+      <div class="glass-card p-6 space-y-6 max-w-4xl">
         <div>
-          <h2 class="text-base font-semibold text-white">API Keys & Provider Configuration</h2>
-          <p class="text-xs text-slate-400 mt-0.5">Configure and test API credentials directly from the browser. Keys are securely saved to your local <code class="text-slate-200">.env</code> file.</p>
+          <h2 class="text-base font-bold text-white">Security Governance & API Credentials</h2>
+          <p class="text-xs text-slate-400 mt-0.5">Manage PII redaction shield and test API keys live before writing to <code class="text-slate-200">.env</code>.</p>
         </div>
 
-        <!-- Section: Groq Pool (10 Keys) -->
-        <div class="space-y-3 p-4 bg-[#12141c] border border-[#2a3142] rounded">
+        <!-- SECTION: PII PROTECTION SHIELD GOVERNANCE -->
+        <div class="space-y-3 p-5 bg-[#0e121d] border border-[#1c2438] rounded-2xl">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2.5">
+              <div class="w-8 h-8 rounded-lg bg-emerald-950/80 border border-emerald-500/40 flex items-center justify-center text-emerald-400">
+                <i data-lucide="shield-alert" class="w-4 h-4"></i>
+              </div>
+              <div>
+                <span class="text-sm font-bold text-white">Cloud PII Redaction & Privacy Shield</span>
+                <div class="text-[11px] text-slate-400">Automatically sanitizes bank accounts, cards, and tax IDs before external AI models</div>
+              </div>
+            </div>
+
+            <!-- Toggle Button -->
+            <button onclick="togglePiiShield()" id="btnPiiToggle" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs px-4 py-1.5 rounded-xl transition">
+              Enabled
+            </button>
+          </div>
+
+          <div class="text-xs text-slate-400 space-y-1 pt-1">
+            <div class="flex items-center space-x-2 text-slate-300">
+              <i data-lucide="check" class="w-3.5 h-3.5 text-emerald-400"></i>
+              <span>Active Protection: Bank Accounts, Credit Cards, SSN / Aadhaar / PAN, Personal Phone Numbers, Personal Emails.</span>
+            </div>
+            <div class="flex items-center space-x-2 text-slate-400">
+              <i data-lucide="info" class="w-3.5 h-3.5 text-cyan-400"></i>
+              <span>Zero Leak Guarantee: External models only see <code>[REDACTED_BANK_ACC]</code> tokens; true values are preserved locally.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION: GROQ POOL (10 Keys) -->
+        <div class="space-y-3 p-5 bg-[#0e121d] border border-[#1c2438] rounded-2xl">
           <div class="flex items-center justify-between">
             <div class="flex items-center space-x-2">
-              <i data-lucide="zap" class="w-4 h-4 text-amber-500"></i>
-              <span class="text-sm font-semibold text-white">Groq Cloud (Multi-Key Rotation Pool)</span>
+              <i data-lucide="zap" class="w-4 h-4 text-amber-400"></i>
+              <span class="text-sm font-bold text-white">Groq Cloud (10-Key Automatic Rotation Pool)</span>
             </div>
-            <button onclick="testProvider('groq')" class="bg-[#212634] hover:bg-[#2a3142] text-xs text-slate-200 px-3 py-1 rounded border border-[#2a3142] flex items-center space-x-1">
-              <i data-lucide="wifi" class="w-3 h-3 text-amber-400"></i>
+            <button onclick="testProvider('groq')" class="bg-[#141a2e] hover:bg-[#1a233d] text-xs text-slate-200 px-3 py-1.5 rounded-xl border border-[#1c2438] flex items-center space-x-1">
+              <i data-lucide="wifi" class="w-3.5 h-3.5 text-amber-400"></i>
               <span>Test Connection</span>
             </button>
           </div>
-          <p class="text-xs text-slate-400">Groq allows free inference. You can paste up to 10 free API keys (<code class="text-slate-300">gsk_...</code>). The engine rotates across them automatically on HTTP 429 rate limits.</p>
+          <p class="text-xs text-slate-400">Free inference across 10 rotating keys (<code class="text-slate-300">gsk_...</code>). System automatically hops keys on HTTP 429 rate limit triggers.</p>
           
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
             <div>
               <label class="text-[11px] text-slate-400 font-mono">GROQ_API_KEY_1 (Primary)</label>
-              <input type="password" id="inputGroq1" placeholder="gsk_..." class="w-full bg-[#0b0d13] border border-[#2a3142] text-xs text-white p-2 rounded mt-1 font-mono focus:border-blue-500 focus:outline-none" />
+              <input type="password" id="inputGroq1" placeholder="gsk_..." class="w-full bg-[#06080e] border border-[#1c2438] text-xs text-white p-2 rounded-lg mt-1 font-mono focus:border-cyan-400 focus:outline-none" />
             </div>
             <div>
               <label class="text-[11px] text-slate-400 font-mono">GROQ_API_KEY_2 (Rotation #2)</label>
-              <input type="password" id="inputGroq2" placeholder="gsk_..." class="w-full bg-[#0b0d13] border border-[#2a3142] text-xs text-white p-2 rounded mt-1 font-mono focus:border-blue-500 focus:outline-none" />
+              <input type="password" id="inputGroq2" placeholder="gsk_..." class="w-full bg-[#06080e] border border-[#1c2438] text-xs text-white p-2 rounded-lg mt-1 font-mono focus:border-cyan-400 focus:outline-none" />
             </div>
           </div>
           <div id="testStatusGroq" class="text-xs font-mono"></div>
         </div>
 
-        <!-- Section: Google Gemini -->
-        <div class="space-y-3 p-4 bg-[#12141c] border border-[#2a3142] rounded">
+        <!-- SECTION: GOOGLE GEMINI -->
+        <div class="space-y-3 p-5 bg-[#0e121d] border border-[#1c2438] rounded-2xl">
           <div class="flex items-center justify-between">
             <div class="flex items-center space-x-2">
-              <i data-lucide="sparkles" class="w-4 h-4 text-blue-400"></i>
-              <span class="text-sm font-semibold text-white">Google Gemini API</span>
+              <i data-lucide="sparkles" class="w-4 h-4 text-cyan-400"></i>
+              <span class="text-sm font-bold text-white">Google Gemini API</span>
             </div>
-            <button onclick="testProvider('gemini')" class="bg-[#212634] hover:bg-[#2a3142] text-xs text-slate-200 px-3 py-1 rounded border border-[#2a3142] flex items-center space-x-1">
-              <i data-lucide="wifi" class="w-3 h-3 text-blue-400"></i>
+            <button onclick="testProvider('gemini')" class="bg-[#141a2e] hover:bg-[#1a233d] text-xs text-slate-200 px-3 py-1.5 rounded-xl border border-[#1c2438] flex items-center space-x-1">
+              <i data-lucide="wifi" class="w-3.5 h-3.5 text-cyan-400"></i>
               <span>Test Connection</span>
             </button>
           </div>
           <div>
             <label class="text-[11px] text-slate-400 font-mono">GEMINI_API_KEY</label>
-            <input type="password" id="inputGemini" placeholder="AIza..." class="w-full bg-[#0b0d13] border border-[#2a3142] text-xs text-white p-2 rounded mt-1 font-mono focus:border-blue-500 focus:outline-none" />
+            <input type="password" id="inputGemini" placeholder="AIza..." class="w-full bg-[#06080e] border border-[#1c2438] text-xs text-white p-2 rounded-lg mt-1 font-mono focus:border-cyan-400 focus:outline-none" />
           </div>
           <div id="testStatusGemini" class="text-xs font-mono"></div>
         </div>
 
-        <!-- Section: OpenAI / Antigravity Gateway -->
-        <div class="space-y-3 p-4 bg-[#12141c] border border-[#2a3142] rounded">
+        <!-- SECTION: OPENAI / ANTIGRAVITY -->
+        <div class="space-y-3 p-5 bg-[#0e121d] border border-[#1c2438] rounded-2xl">
           <div class="flex items-center justify-between">
             <div class="flex items-center space-x-2">
               <i data-lucide="bot" class="w-4 h-4 text-emerald-400"></i>
-              <span class="text-sm font-semibold text-white">OpenAI / Antigravity Passthrough</span>
+              <span class="text-sm font-bold text-white">OpenAI / Antigravity Gateway</span>
             </div>
-            <button onclick="testProvider('openai')" class="bg-[#212634] hover:bg-[#2a3142] text-xs text-slate-200 px-3 py-1 rounded border border-[#2a3142] flex items-center space-x-1">
-              <i data-lucide="wifi" class="w-3 h-3 text-emerald-400"></i>
+            <button onclick="testProvider('openai')" class="bg-[#141a2e] hover:bg-[#1a233d] text-xs text-slate-200 px-3 py-1.5 rounded-xl border border-[#1c2438] flex items-center space-x-1">
+              <i data-lucide="wifi" class="w-3.5 h-3.5 text-emerald-400"></i>
               <span>Test Connection</span>
             </button>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
               <label class="text-[11px] text-slate-400 font-mono">OPENAI_API_KEY</label>
-              <input type="password" id="inputOpenAI" placeholder="sk-..." class="w-full bg-[#0b0d13] border border-[#2a3142] text-xs text-white p-2 rounded mt-1 font-mono focus:border-blue-500 focus:outline-none" />
+              <input type="password" id="inputOpenAI" placeholder="sk-..." class="w-full bg-[#06080e] border border-[#1c2438] text-xs text-white p-2 rounded-lg mt-1 font-mono focus:border-cyan-400 focus:outline-none" />
             </div>
             <div>
               <label class="text-[11px] text-slate-400 font-mono">OPENAI_BASE_URL (Optional Gateway)</label>
-              <input type="text" id="inputOpenAIBase" placeholder="https://api.openai.com/v1" class="w-full bg-[#0b0d13] border border-[#2a3142] text-xs text-white p-2 rounded mt-1 font-mono focus:border-blue-500 focus:outline-none" />
+              <input type="text" id="inputOpenAIBase" placeholder="https://api.openai.com/v1" class="w-full bg-[#06080e] border border-[#1c2438] text-xs text-white p-2 rounded-lg mt-1 font-mono focus:border-cyan-400 focus:outline-none" />
             </div>
           </div>
           <div id="testStatusOpenAI" class="text-xs font-mono"></div>
         </div>
 
-        <!-- Section: Local LLM (Ollama / Hermes) -->
-        <div class="space-y-3 p-4 bg-[#12141c] border border-[#2a3142] rounded">
+        <!-- SECTION: LOCAL LLM (Ollama / Hermes) -->
+        <div class="space-y-3 p-5 bg-[#0e121d] border border-[#1c2438] rounded-2xl">
           <div class="flex items-center justify-between">
             <div class="flex items-center space-x-2">
-              <i data-lucide="server" class="w-4 h-4 text-purple-400"></i>
-              <span class="text-sm font-semibold text-white">Local LLM Endpoint (Ollama / Hermes 3)</span>
+              <i data-lucide="server" class="w-4 h-4 text-indigo-400"></i>
+              <span class="text-sm font-bold text-white">Local LLM Endpoint (Ollama / Hermes 3)</span>
             </div>
-            <button onclick="testProvider('local')" class="bg-[#212634] hover:bg-[#2a3142] text-xs text-slate-200 px-3 py-1 rounded border border-[#2a3142] flex items-center space-x-1">
-              <i data-lucide="wifi" class="w-3 h-3 text-purple-400"></i>
+            <button onclick="testProvider('local')" class="bg-[#141a2e] hover:bg-[#1a233d] text-xs text-slate-200 px-3 py-1.5 rounded-xl border border-[#1c2438] flex items-center space-x-1">
+              <i data-lucide="wifi" class="w-3.5 h-3.5 text-indigo-400"></i>
               <span>Test Connection</span>
             </button>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
               <label class="text-[11px] text-slate-400 font-mono">LOCAL_LLM_BASE_URL</label>
-              <input type="text" id="inputLocalUrl" value="http://localhost:11434/v1" class="w-full bg-[#0b0d13] border border-[#2a3142] text-xs text-white p-2 rounded mt-1 font-mono focus:border-blue-500 focus:outline-none" />
+              <input type="text" id="inputLocalUrl" value="http://localhost:11434/v1" class="w-full bg-[#06080e] border border-[#1c2438] text-xs text-white p-2 rounded-lg mt-1 font-mono focus:border-cyan-400 focus:outline-none" />
             </div>
             <div>
               <label class="text-[11px] text-slate-400 font-mono">LOCAL_LLM_MODEL</label>
-              <input type="text" id="inputLocalModel" value="qwen2.5-vl:7b" class="w-full bg-[#0b0d13] border border-[#2a3142] text-xs text-white p-2 rounded mt-1 font-mono focus:border-blue-500 focus:outline-none" />
+              <input type="text" id="inputLocalModel" value="qwen2.5-vl:7b" class="w-full bg-[#06080e] border border-[#1c2438] text-xs text-white p-2 rounded-lg mt-1 font-mono focus:border-cyan-400 focus:outline-none" />
             </div>
           </div>
           <div id="testStatusLocal" class="text-xs font-mono"></div>
@@ -633,8 +939,8 @@
 
         <!-- Save Button -->
         <div class="pt-2 flex items-center justify-between">
-          <div id="saveSuccessNotice" class="text-xs text-emerald-400 font-medium"></div>
-          <button onclick="saveAllKeys()" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs px-6 py-2 rounded shadow transition">
+          <div id="saveSuccessNotice" class="text-xs text-emerald-400 font-bold font-mono"></div>
+          <button onclick="saveAllKeys()" class="btn-gradient text-white font-bold text-xs px-6 py-2.5 rounded-xl shadow transition">
             Save Settings to .env
           </button>
         </div>
@@ -643,12 +949,16 @@
 
   </main>
 
-  <!-- JAVASCRIPT LOGIC -->
+  <!-- SCRIPT LOGIC (CORE ENGINE) -->
   <script>
     let currentDocId = "L01";
     let currentDocData = null;
     let currentZoom = 1.0;
     let analyticsChartInstance = null;
+    let queuedBatchFiles = [];
+    let piiShieldActive = true;
+    let currentStudioFields = [];
+    let activeCustomTemplate = null;
 
     window.addEventListener("DOMContentLoaded", async () => {
       lucide.createIcons();
@@ -656,11 +966,15 @@
       await loadSelectedDocument();
       initAnalyticsChart();
       loadMcpManifest();
+      initWorkspaceDragAndDrop();
+      initBatchDragAndDrop();
+      loadSavedTemplates();
+      fetchPiiStatus();
     });
 
     // Navigation Switcher
     function navigatePage(pageId) {
-      const pages = ['workspace', 'batch', 'analytics', 'mcp', 'settings'];
+      const pages = ['workspace', 'batch', 'templates', 'analytics', 'mcp', 'settings'];
       pages.forEach(p => {
         const el = document.getElementById(`page${p.charAt(0).toUpperCase() + p.slice(1)}`);
         const nav = document.getElementById(`nav${p.charAt(0).toUpperCase() + p.slice(1)}`);
@@ -678,7 +992,9 @@
       if (pageId === 'settings') loadKeysConfig();
     }
 
-    // Load available sample documents into dropdown
+    // -------------------------------------------------------------
+    // 1. WORKSPACE LOGIC
+    // -------------------------------------------------------------
     async function loadDocumentList() {
       try {
         const res = await fetch("/api/documents");
@@ -707,7 +1023,6 @@
       }
     }
 
-    // Load selected document in Workspace
     async function loadSelectedDocument() {
       currentDocId = document.getElementById("docSelect").value;
       const img = document.getElementById("docPreviewImg");
@@ -730,7 +1045,6 @@
       }
     }
 
-    // Run extraction on current document
     async function extractCurrentDocument() {
       const mode = document.getElementById("headerModeSelect").value;
       const btn = document.getElementById("btnExtract");
@@ -742,14 +1056,13 @@
         currentDocData = json.data;
         renderData(currentDocData);
       } catch (e) {
-        alert("Extraction error: " + e.message);
+        alert("E xtraction error: " + e.message);
       } finally {
         btn.innerHTML = `<i data-lucide="play" class="w-3.5 h-3.5 fill-current"></i><span>Extract & Validate</span>`;
         lucide.createIcons();
       }
     }
 
-    // Render extracted JSON into UI
     function renderData(data) {
       if (!data) return;
 
@@ -764,7 +1077,7 @@
       } else {
         bannerNonInv.classList.add("hidden");
         bannerVal.classList.remove("hidden");
-        valText.textContent = "Schema Conformed & Arithmetic Balanced";
+        valText.textContent = "Schema Validated & Arithmetic Reconciled";
       }
 
       document.getElementById("fldVendor").textContent = data.vendor || "—";
@@ -789,72 +1102,99 @@
 
         if (idx < 3) {
           qHtml += `<tr>
-            <td class="p-2.5 text-slate-300 truncate max-w-[200px]">${item.description}</td>
-            <td class="p-2.5 text-right text-slate-400">${qtyStr}</td>
-            <td class="p-2.5 text-right text-white font-bold">${amtStr}</td>
+            <td class="p-3 text-slate-300 truncate max-w-[200px]">${item.description}</td>
+            <td class="p-3 text-right text-slate-400">${qtyStr}</td>
+            <td class="p-3 text-right text-white font-bold">${amtStr}</td>
           </tr>`;
         }
 
-        fHtml += `<tr class="hover:bg-[#212634]">
-          <td class="p-2.5 text-slate-500">${idx + 1}</td>
-          <td class="p-2.5 text-slate-200 font-medium">${item.description}</td>
-          <td class="p-2.5 text-right text-slate-400">${qtyStr}</td>
-          <td class="p-2.5 text-right font-bold ${item.amount < 0 ? 'text-rose-400' : 'text-emerald-400'}">${amtStr}</td>
+        fHtml += `<tr class="hover:bg-[#1a233d]">
+          <td class="p-3 text-slate-500">${idx + 1}</td>
+          <td class="p-3 text-slate-200 font-medium">${item.description}</td>
+          <td class="p-3 text-right text-slate-400">${qtyStr}</td>
+          <td class="p-3 text-right font-bold ${item.amount < 0 ? 'text-rose-400' : 'text-cyan-400'}">${amtStr}</td>
         </tr>`;
       });
 
       if (!items.length) {
-        qHtml = `<tr><td colspan="3" class="p-3 text-center text-slate-500 font-mono">No line items (non-invoice or empty table)</td></tr>`;
+        qHtml = `<tr><td colspan="3" class="p-4 text-center text-slate-500 font-mono">No line items (non-invoice or empty table)</td></tr>`;
         fHtml = `<tr><td colspan="4" class="p-4 text-center text-slate-500 font-mono">No line items found.</td></tr>`;
       }
 
       document.getElementById("quickItemsBody").innerHTML = qHtml;
       document.getElementById("fullItemsBody").innerHTML = fHtml;
 
-      // Math diff badge
       const tax = data.tax_total || 0;
       const total = data.total || 0;
       const diff = Math.abs((lineSum + tax) - total);
       const mathDiffBadge = document.getElementById("mathDiffBadge");
       mathDiffBadge.textContent = isInv ? `DIFF ±${diff.toFixed(2)}` : "N/A";
 
-      // Raw JSON Code
       document.getElementById("rawJsonCode").textContent = JSON.stringify(data, null, 2);
     }
 
-    // Switch Right Tabs
     function switchRightTab(tab) {
       ['fields', 'items', 'json'].forEach(t => {
         const el = document.getElementById(`view${t.charAt(0).toUpperCase() + t.slice(1)}`);
         const btn = document.getElementById(`tabBtn${t.charAt(0).toUpperCase() + t.slice(1)}`);
         if (t === tab) {
           el.classList.remove('hidden');
-          btn.className = "px-3 py-1 rounded bg-[#212634] text-white font-medium";
+          btn.className = "px-3.5 py-1.5 rounded-lg bg-[#182038] text-white font-medium border border-cyan-500/30";
         } else {
           el.classList.add('hidden');
-          btn.className = "px-3 py-1 rounded text-slate-400 hover:text-white";
+          btn.className = "px-3.5 py-1.5 rounded-lg text-slate-400 hover:text-white";
         }
       });
     }
 
-    // Drag-and-drop file upload
-    async function handleFileUpload(event) {
-      const file = event.target.files[0];
-      if (!file) return;
+    function initWorkspaceDragAndDrop() {
+      const dropZone = document.getElementById("docViewerContainer");
+      const overlay = document.getElementById("dropOverlay");
+      if (!dropZone || !overlay) return;
 
+      ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          overlay.classList.remove('hidden');
+        }, false);
+      });
+
+      ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          overlay.classList.add('hidden');
+        }, false);
+      });
+
+      dropZone.addEventListener('drop', (e) => {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        if (files && files.length > 0) {
+          processSingleUploadedFile(files[0]);
+        }
+      }, false);
+    }
+
+    async function handleSingleFileUpload(event) {
+      const file = event.target.files[0];
+      if (file) await processSingleUploadedFile(file);
+    }
+
+    async function processSingleUploadedFile(file) {
       const formData = new FormData();
       formData.append("file", file);
       formData.append("mode", document.getElementById("headerModeSelect").value);
 
       const btn = document.getElementById("btnExtract");
-      btn.innerHTML = `<i data-lucide="loader" class="w-3.5 h-3.5 animate-spin"></i><span>Uploading...</span>`;
+      btn.innerHTML = `<i data-lucide="loader" class="w-3.5 h-3.5 animate-spin"></i><span>Processing ${file.name}...</span>`;
 
       try {
         const res = await fetch("/api/upload-and-extract", { method: "POST", body: formData });
         const json = await res.json();
         currentDocId = json.doc_id;
 
-        // Add to select
         const select = document.getElementById("docSelect");
         const opt = document.createElement("option");
         opt.value = json.doc_id;
@@ -871,7 +1211,6 @@
       }
     }
 
-    // Copy JSON
     function copyJson() {
       const text = document.getElementById("rawJsonCode").textContent;
       navigator.clipboard.writeText(text);
@@ -888,7 +1227,6 @@
       a.click();
     }
 
-    // Zoom Controls
     function zoom(f) {
       currentZoom = Math.min(2.5, Math.max(0.5, currentZoom * f));
       document.getElementById("docPreviewImg").style.transform = `scale(${currentZoom})`;
@@ -898,10 +1236,139 @@
       document.getElementById("docPreviewImg").style.transform = "scale(1)";
     }
 
-    // Batch Page Loader
+    // -------------------------------------------------------------
+    // 2. BATCH INGESTION & MULTI-FILE UPLOAD
+    // -------------------------------------------------------------
+    function initBatchDragAndDrop() {
+      const dropZone = document.getElementById("batchDropZone");
+      if (!dropZone) return;
+
+      ['dragenter', 'dragover'].forEach(name => {
+        dropZone.addEventListener(name, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          dropZone.classList.add("border-cyan-400", "bg-cyan-950/20");
+        }, false);
+      });
+
+      ['dragleave', 'drop'].forEach(name => {
+        dropZone.addEventListener(name, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          dropZone.classList.remove("border-cyan-400", "bg-cyan-950/20");
+        }, false);
+      });
+
+      dropZone.addEventListener('drop', (e) => {
+        const dt = e.dataTransfer;
+        if (dt.files && dt.files.length > 0) {
+          queueBatchFiles(dt.files);
+        }
+      }, false);
+    }
+
+    function handleBatchFilesSelected(e) {
+      if (e.target.files && e.target.files.length > 0) {
+        queueBatchFiles(e.target.files);
+      }
+    }
+
+    function queueBatchFiles(fileList) {
+      for (let i = 0; i < fileList.length; i++) {
+        queuedBatchFiles.push(fileList[i]);
+      }
+      renderBatchQueuedChips();
+    }
+
+    function renderBatchQueuedChips() {
+      const area = document.getElementById("batchQueuedFilesArea");
+      const chips = document.getElementById("batchFileChips");
+      const count = document.getElementById("batchQueuedCount");
+
+      if (queuedBatchFiles.length === 0) {
+        area.classList.add("hidden");
+        return;
+      }
+
+      area.classList.remove("hidden");
+      count.textContent = queuedBatchFiles.length;
+
+      let html = "";
+      queuedBatchFiles.forEach((f, idx) => {
+        const sizeKb = (f.size / 1024).toFixed(1);
+        html += `<div class="flex items-center space-x-1.5 bg-[#141a2e] border border-[#1c2438] px-2.5 py-1 rounded-lg text-xs">
+          <i data-lucide="file" class="w-3 h-3 text-cyan-400"></i>
+          <span class="text-slate-200 font-mono">${f.name}</span>
+          <span class="text-slate-500 font-mono text-[10px]">(${sizeKb} KB)</span>
+          <button onclick="removeQueuedBatchFile(${idx})" class="text-rose-400 hover:text-rose-300 ml-1">&times;</button>
+        </div>`;
+      });
+      chips.innerHTML = html;
+      lucide.createIcons();
+    }
+
+    function removeQueuedBatchFile(idx) {
+      queuedBatchFiles.splice(idx, 1);
+      renderBatchQueuedChips();
+    }
+
+    function clearBatchQueue() {
+      queuedBatchFiles = [];
+      renderBatchQueuedChips();
+    }
+
+    async function extractAllBatch() {
+      const btn = document.getElementById("btnExtractAllBatch");
+      const progContainer = document.getElementById("batchProgressContainer");
+      const progBar = document.getElementById("batchProgressBar");
+      const progPercent = document.getElementById("batchProgressPercent");
+      const progStatus = document.getElementById("batchProgressStatus");
+
+      btn.disabled = true;
+      progContainer.classList.remove("hidden");
+
+      try {
+        // If user queued new files via drag & drop, upload and process them in batch first!
+        if (queuedBatchFiles.length > 0) {
+          progStatus.textContent = `Uploading and extracting ${queuedBatchFiles.length} new batch files...`;
+          progBar.style.width = `20%`;
+          progPercent.textContent = `20%`;
+
+          const formData = new FormData();
+          queuedBatchFiles.forEach(f => formData.append("files", f));
+          formData.append("mode", document.getElementById("headerModeSelect").value);
+
+          const res = await fetch("/api/batch-upload-and-extract", { method: "POST", body: formData });
+          const json = await res.json();
+          progBar.style.width = `60%`;
+          progPercent.textContent = `60%`;
+          queuedBatchFiles = [];
+          renderBatchQueuedChips();
+        }
+
+        // Also process standard system documents
+        const docs = ["L01","L02","L03","L04","L05","L06","L07","L08","L09","L10","U01","U02","U03","U04","U05","U06","U07","U08","U09","U10"];
+        for (let i = 0; i < docs.length; i++) {
+          const id = docs[i];
+          progStatus.textContent = `Reconciling ${id}... (${i+1}/${docs.length})`;
+          const pct = Math.round(60 + (((i + 1) / docs.length) * 40));
+          progBar.style.width = `${pct}%`;
+          progPercent.textContent = `${pct}%`;
+          await fetch(`/api/extract/${id}`, { method: "POST" });
+        }
+
+        progStatus.textContent = "Batch processing complete! All documents reconciled.";
+        await loadBatchTable();
+      } catch (e) {
+        alert("Batch error: " + e.message);
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
     async function loadBatchTable() {
       const tbody = document.getElementById("batchTableBody");
-      tbody.innerHTML = `<tr><td colspan="9" class="p-4 text-center text-slate-500 font-mono">Loading document outputs...</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="9" class="p-5 text-center text-slate-500 font-mono">Loading batch ledger...</td></tr>`;
 
       try {
         const docRes = await fetch("/api/documents");
@@ -914,68 +1381,285 @@
           const p = outJson.data || {};
 
           const isInv = p.is_invoice;
-          const isInvBadge = isInv ? `<span class="text-emerald-400 font-bold">YES</span>` : `<span class="text-sky-400 font-bold">NO</span>`;
+          const isInvBadge = isInv ? `<span class="text-emerald-400 font-bold">YES</span>` : `<span class="text-cyan-400 font-bold">NO</span>`;
           const totStr = p.total !== null && p.total !== undefined ? `${p.currency || ''} ${p.total.toFixed(2)}` : "—";
           const taxStr = p.tax_total !== null && p.tax_total !== undefined ? `${p.currency || ''} ${p.tax_total.toFixed(2)}` : "—";
-          const itemsCount = p.line_items ? p.line_items.length : 0;
 
-          html += `<tr class="hover:bg-[#1a1e29] cursor-pointer" onclick="openDocInWorkspace('${d.id}')">
-            <td class="p-3 font-bold text-blue-400">${d.id}</td>
-            <td class="p-3 text-slate-300">${d.filename}</td>
-            <td class="p-3 text-center">${isInvBadge}</td>
-            <td class="p-3 text-slate-200 truncate max-w-[180px]">${p.vendor || "—"}</td>
-            <td class="p-3 text-slate-300 font-mono">${p.invoice_number || "—"}</td>
-            <td class="p-3 text-slate-300 font-mono">${p.invoice_date || "—"}</td>
-            <td class="p-3 text-right font-mono text-slate-400">${taxStr}</td>
-            <td class="p-3 text-right font-mono font-bold text-white">${totStr}</td>
-            <td class="p-3 text-center"><span class="bg-emerald-950/80 text-emerald-400 border border-emerald-800 text-[10px] px-2 py-0.5 rounded font-bold">VERIFIED</span></td>
+          html += `<tr class="hover:bg-[#1a233d] cursor-pointer transition-colors" onclick="openDocInWorkspace('${d.id}')">
+            <td class="p-3.5 font-bold text-cyan-400">${d.id}</td>
+            <td class="p-3.5 text-slate-300">${d.filename}</td>
+            <td class="p-3.5 text-center">${isInvBadge}</td>
+            <td class="p-3.5 text-slate-200 truncate max-w-[180px]">${p.vendor || "—"}</td>
+            <td class="p-3.5 text-slate-300 font-mono">${p.invoice_number || "—"}</td>
+            <td class="p-3.5 text-slate-300 font-mono">${p.invoice_date || "—"}</td>
+            <td class="p-3.5 text-right font-mono text-slate-400">${taxStr}</td>
+            <td class="p-3.5 text-right font-mono font-bold text-white">${totStr}</td>
+            <td class="p-3.5 text-center"><span class="bg-emerald-950/80 text-emerald-300 border border-emerald-500/30 text-[10px] px-2.5 py-0.5 rounded-full font-bold">VERIFIED</span></td>
           </tr>`;
         }
 
         tbody.innerHTML = html;
+        document.getElementById("batchTotalCountLabel").textContent = `${docJson.documents.length} Documents Processed`;
       } catch (e) {
-        tbody.innerHTML = `<tr><td colspan="9" class="p-4 text-center text-rose-400">Failed to load batch records: ${e.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" class="p-5 text-center text-rose-400">Error: ${e.message}</td></tr>`;
       }
     }
 
     function openDocInWorkspace(docId) {
       document.getElementById("docSelect").value = docId;
       navigatePage('workspace');
-      loadSelectedDocument();
+      loadSelected();
     }
 
-    // Run Batch Extraction on All 20 Documents
-    async function runBatchAll() {
-      const btn = document.getElementById("btnRunBatchAll");
-      const progContainer = document.getElementById("batchProgressContainer");
-      const progBar = document.getElementById("batchProgressBar");
-      const progPercent = document.getElementById("batchProgressPercent");
-      const progStatus = document.getElementById("batchProgressStatus");
+    // -------------------------------------------------------------
+    // 3. DYNAMIC TEMPLATE STUDIO LOGIC
+    // -------------------------------------------------------------
+    let studioUploadedFile = null;
 
-      btn.disabled = true;
-      progContainer.classList.remove("hidden");
-
-      try {
-        const docs = ["L01","L02","L03","L04","L05","L06","L07","L08","L09","L10","U01","U02","U03","U04","U05","U06","U07","U08","U09","U10"];
-        for (let i = 0; i < docs.length; i++) {
-          const id = docs[i];
-          progStatus.textContent = `Extracting ${id}... (${i+1}/${docs.length})`;
-          const pct = Math.round(((i + 1) / docs.length) * 100);
-          progBar.style.width = `${pct}%`;
-          progPercent.textContent = `${pct}%`;
-
-          await fetch(`/api/extract/${id}`, { method: "POST" });
-        }
-        progStatus.textContent = "Extraction complete for all 20 documents!";
-        await loadBatchTable();
-      } catch (e) {
-        alert("Batch error: " + e.message);
-      } finally {
-        btn.disabled = false;
+    function handleStudioDocUpload(e) {
+      if (e.target.files && e.target.files[0]) {
+        studioUploadedFile = e.target.files[0];
+        document.getElementById("studioDocStatus").textContent = `Selected: ${studioUploadedFile.name}`;
       }
     }
 
-    // Trigger Benchmark on Analytics Page
+    async function discoverFromSelectedSample() {
+      const sampleId = document.getElementById("studioSampleSelect").value;
+      await runDiscoveryWithParams(null, sampleId);
+    }
+
+    async function triggerDiscovery() {
+      if (studioUploadedFile) {
+        await runDiscoveryWithParams(studioUploadedFile, null);
+      } else {
+        const sampleId = document.getElementById("studioSampleSelect").value;
+        await runDiscoveryWithParams(null, sampleId);
+      }
+    }
+
+    async function runDiscoveryWithParams(file, docId) {
+      const btn = document.getElementById("btnDiscoverFields");
+      btn.innerHTML = `<i data-lucide="loader" class="w-4 h-4 animate-spin"></i><span>Scanning & Discovering Entities...</span>`;
+
+      const formData = new FormData();
+      if (file) formData.append("file", file);
+      if (docId) formData.append("doc_id", docId);
+
+      try {
+        const res = await fetch("/api/templates/discover", { method: "POST", body: formData });
+        const json = await res.json();
+
+        document.getElementById("studioRawTextPreview").textContent = json.text_sample || "No text detected.";
+        currentStudioFields = json.discovered_fields || [];
+        renderStudioFieldsTable();
+      } catch (e) {
+        alert("Discovery error: " + e.message);
+      } finally {
+        btn.innerHTML = `<i data-lucide="scan" class="w-4 h-4"></i><span>Scan & Auto-Discover All Fields</span>`;
+        lucide.createIcons();
+      }
+    }
+
+    function renderStudioFieldsTable() {
+      const tbody = document.getElementById("studioFieldsTableBody");
+      if (!currentStudioFields.length) {
+        tbody.innerHTML = `<tr><td colspan="5" class="p-5 text-center text-slate-500">No fields discovered yet.</td></tr>`;
+        return;
+      }
+
+      let html = "";
+      currentStudioFields.forEach((f, idx) => {
+        const checked = f.selected !== false ? "checked" : "";
+        html += `<tr class="hover:bg-[#1a233d]">
+          <td class="p-3 text-center">
+            <input type="checkbox" id="chk_fld_${idx}" ${checked} onchange="toggleStudioField(${idx})" class="w-4 h-4 accent-cyan-400 rounded cursor-pointer" />
+          </td>
+          <td class="p-3 font-mono font-semibold text-cyan-300">${f.key}</td>
+          <td class="p-3 text-slate-200">
+            <input type="text" value="${f.label}" onchange="updateStudioFieldLabel(${idx}, this.value)" class="bg-[#090b12] border border-[#1c2438] text-xs text-white px-2 py-1 rounded w-full font-sans" />
+          </td>
+          <td class="p-3 text-slate-400 font-mono text-[11px] truncate max-w-[180px]">${f.sample_value || '—'}</td>
+          <td class="p-3 text-center">
+            <span class="bg-[#141a2e] text-slate-300 text-[10px] px-2 py-0.5 rounded border border-[#1c2438] uppercase">${f.data_type}</span>
+          </td>
+        </tr>`;
+      });
+
+      tbody.innerHTML = html;
+    }
+
+    function toggleStudioField(idx) {
+      const chk = document.getElementById(`chk_fld_${idx}`);
+      currentStudioFields[idx].selected = chk.checked;
+    }
+
+    function updateStudioFieldLabel(idx, val) {
+      currentStudioFields[idx].label = val;
+    }
+
+    function addCustomFieldRow() {
+      const keyInput = document.getElementById("customFieldKey");
+      const labelInput = document.getElementById("customFieldLabel");
+
+      const key = keyInput.value.trim().toLowerCase().replace(/[^a-z0-9_]/g, '_');
+      const label = labelInput.value.trim() || key;
+
+      if (!key) {
+        alert("Please specify a field key.");
+        return;
+      }
+
+      currentStudioFields.push({
+        key: key,
+        label: label,
+        sample_value: "Custom User Field",
+        data_type: "string",
+        selected: true
+      });
+
+      keyInput.value = "";
+      labelInput.value = "";
+      renderStudioFieldsTable();
+    }
+
+    async function saveCurrentTemplate() {
+      const name = document.getElementById("inputTemplateName").value.trim();
+      const desc = document.getElementById("inputTemplateDesc").value.trim();
+
+      if (!name) {
+        alert("Please provide a template name before saving.");
+        return;
+      }
+
+      const activeFields = currentStudioFields.filter(f => f.selected !== false);
+      if (!activeFields.length) {
+        alert("Please select at least one field to save in this template.");
+        return;
+      }
+
+      const templatePayload = {
+        name: name,
+        description: desc,
+        fields: activeFields
+      };
+
+      try {
+        const res = await fetch("/api/templates/save", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(templatePayload)
+        });
+        const json = await res.json();
+        
+        // Save to browser localStorage as well
+        const localTemplates = JSON.parse(localStorage.getItem("esmagico_custom_templates") || "[]");
+        localTemplates.push(json.template);
+        localStorage.setItem("esmagico_custom_templates", JSON.stringify(localTemplates));
+
+        const notice = document.getElementById("studioSaveNotice");
+        notice.textContent = `✓ Template "${name}" saved successfully to system & browser storage!`;
+        setTimeout(() => notice.textContent = "", 4000);
+
+        await loadSavedTemplates();
+      } catch (e) {
+        alert("Failed to save template: " + e.message);
+      }
+    }
+
+    async function loadSavedTemplates() {
+      const select = document.getElementById("studioTemplateSelect");
+      select.innerHTML = `<option value="">-- Choose Template --</option>`;
+
+      try {
+        const res = await fetch("/api/templates/list");
+        const json = await res.json();
+        const serverTemplates = json.templates || [];
+
+        const localTemplates = JSON.parse(localStorage.getItem("esmagico_custom_templates") || "[]");
+        const allTemplates = [...serverTemplates, ...localTemplates];
+
+        const seen = new Set();
+        allTemplates.forEach(t => {
+          if (!seen.has(t.id)) {
+            seen.add(t.id);
+            const opt = document.createElement("option");
+            opt.value = t.id;
+            opt.textContent = `${t.name} (${t.fields ? t.fields.length : 0} fields)`;
+            select.appendChild(opt);
+          }
+        });
+      } catch (e) {
+        console.error("Failed to load templates:", e);
+      }
+    }
+
+    function onTemplateSelectChange() {
+      const id = document.getElementById("studioTemplateSelect").value;
+      if (!id) return;
+
+      const localTemplates = JSON.parse(localStorage.getItem("esmagico_custom_templates") || "[]");
+      const found = localTemplates.find(t => t.id === id);
+      if (found) {
+        document.getElementById("inputTemplateName").value = found.name;
+        document.getElementById("inputTemplateDesc").value = found.description || "";
+        currentStudioFields = found.fields.map(f => ({ ...f, selected: true }));
+        renderStudioFieldsTable();
+      }
+    }
+
+    function createNewTemplateDraft() {
+      document.getElementById("inputTemplateName").value = "";
+      document.getElementById("inputTemplateDesc").value = "";
+      currentStudioFields = [];
+      renderStudioFieldsTable();
+      document.getElementById("studioTemplateSelect").value = "";
+    }
+
+    let lastCustomExtractedData = null;
+
+    async function testExtractWithTemplate() {
+      const templateId = document.getElementById("studioTemplateSelect").value;
+      const btn = document.getElementById("btnTestTemplateExtract");
+      btn.innerHTML = `<i data-lucide="loader" class="w-3.5 h-3.5 animate-spin"></i><span>Extracting with Template...</span>`;
+
+      const formData = new FormData();
+      formData.append("template_id", templateId);
+      formData.append("mode", document.getElementById("headerModeSelect").value);
+      if (studioUploadedFile) {
+        formData.append("file", studioUploadedFile);
+      } else {
+        formData.append("doc_id", document.getElementById("studioSampleSelect").value);
+      }
+
+      try {
+        const res = await fetch("/api/templates/extract", { method: "POST", body: formData });
+        const json = await res.json();
+        lastCustomExtractedData = json.data;
+
+        const container = document.getElementById("studioCustomOutputContainer");
+        container.classList.remove("hidden");
+        document.getElementById("studioCustomOutputCode").textContent = JSON.stringify(json.data, null, 2);
+      } catch (e) {
+        alert("Template extraction failed: " + e.message);
+      } finally {
+        btn.innerHTML = `<i data-lucide="play" class="w-3.5 h-3.5 fill-current"></i><span>Extract Document Using This Template</span>`;
+        lucide.createIcons();
+      }
+    }
+
+    function downloadCustomJson() {
+      if (!lastCustomExtractedData) return;
+      const blob = new Blob([JSON.stringify(lastCustomExtractedData, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `custom_template_extract.json`;
+      a.click();
+    }
+
+    // -------------------------------------------------------------
+    // 4. ANALYTICS & AP GAUGE LOGIC
+    // -------------------------------------------------------------
     async function triggerBenchmark() {
       const btn = document.getElementById("btnTriggerBenchmark");
       if (btn) btn.innerHTML = `<i data-lucide="loader" class="w-3.5 h-3.5 animate-spin"></i><span>Benchmarking...</span>`;
@@ -983,8 +1667,16 @@
       try {
         const res = await fetch("/api/eval");
         const json = await res.json();
-        
+
         document.getElementById("benchOverallAcc").textContent = `${json.overall_accuracy}%`;
+
+        // Update circular gauge stroke
+        const gaugeCircle = document.getElementById("gaugeCircle");
+        if (gaugeCircle) {
+          const circumference = 201;
+          const offset = circumference - (circumference * (json.overall_accuracy / 100));
+          gaugeCircle.style.strokeDashoffset = offset;
+        }
 
         // Update chart
         if (analyticsChartInstance && json.field_accuracy) {
@@ -1000,8 +1692,8 @@
           const m = r.field_matches;
           const mark = (v) => v ? `<span class="text-emerald-400 font-bold">✓</span>` : `<span class="text-rose-400 font-bold">✗</span>`;
 
-          html += `<tr class="hover:bg-[#1a1e29]">
-            <td class="p-2.5 font-bold text-blue-400">${r.doc_id}</td>
+          html += `<tr class="hover:bg-[#1a233d]">
+            <td class="p-2.5 font-bold text-cyan-400">${r.doc_id}</td>
             <td class="p-2.5 text-slate-300">${r.file_name}</td>
             <td class="p-2.5 text-center">${mark(m.is_invoice)}</td>
             <td class="p-2.5 text-center">${mark(m.vendor)}</td>
@@ -1030,17 +1722,17 @@
         data: {
           labels: ['is_invoice', 'vendor', 'invoice_num', 'date', 'currency', 'line_items', 'tax_total', 'total'],
           datasets: [{
-            label: 'Field Accuracy %',
+            label: 'Accuracy %',
             data: [100, 90, 100, 100, 100, 70, 90, 100],
-            backgroundColor: '#3b82f6',
-            borderRadius: 4
+            backgroundColor: '#00f0ff',
+            borderRadius: 6
           }]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
           scales: {
-            y: { beginAtZero: true, max: 100, grid: { color: '#2a3142' }, ticks: { color: '#94a3b8' } },
+            y: { beginAtZero: true, max: 100, grid: { color: '#1c2438' }, ticks: { color: '#94a3b8' } },
             x: { grid: { display: false }, ticks: { color: '#f1f5f9' } }
           },
           plugins: { legend: { display: false } }
@@ -1048,7 +1740,6 @@
       });
     }
 
-    // Load MCP Manifest
     async function loadMcpManifest() {
       try {
         const res = await fetch("/api/mcp/manifest");
@@ -1059,7 +1750,54 @@
       }
     }
 
-    // Load API Keys into Settings Page
+    // -------------------------------------------------------------
+    // 5. PII GOVERNANCE & SETTINGS LOGIC
+    // -------------------------------------------------------------
+    async function fetchPiiStatus() {
+      try {
+        const res = await fetch("/api/pii/status");
+        const json = await res.json();
+        piiShieldActive = json.enabled;
+        updatePiiBadge();
+      } catch (e) {
+        console.error("PII status error:", e);
+      }
+    }
+
+    async function togglePiiShield() {
+      piiShieldActive = !piiShieldActive;
+      try {
+        await fetch("/api/pii/toggle", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ enabled: piiShieldActive })
+        });
+        updatePiiBadge();
+      } catch (e) {
+        alert("Toggle failed: " + e.message);
+      }
+    }
+
+    function updatePiiBadge() {
+      const badge = document.getElementById("piiShieldBadge");
+      const btn = document.getElementById("btnPiiToggle");
+      if (piiShieldActive) {
+        badge.className = "flex items-center space-x-2 px-3 py-1.5 rounded-xl bg-[#0e1626] border border-emerald-500/40 text-emerald-300 font-mono shadow-[0_0_12px_rgba(16,185,129,0.15)]";
+        badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span><span class="font-semibold text-[11px] tracking-wider">PII SHIELD: ACTIVE</span>`;
+        if (btn) {
+          btn.textContent = "Enabled";
+          btn.className = "bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs px-4 py-1.5 rounded-xl transition";
+        }
+      } else {
+        badge.className = "flex items-center space-x-2 px-3 py-1.5 rounded-xl bg-[#1c1212] border border-rose-500/40 text-rose-300 font-mono";
+        badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-rose-400"></span><span class="font-semibold text-[11px] tracking-wider">PII SHIELD: OFF</span>`;
+        if (btn) {
+          btn.textContent = "Disabled";
+          btn.className = "bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs px-4 py-1.5 rounded-xl transition";
+        }
+      }
+    }
+
     async function loadKeysConfig() {
       try {
         const res = await fetch("/api/settings/keys");
@@ -1081,10 +1819,9 @@
       }
     }
 
-    // Live Connection Test for Any Provider
     async function testProvider(prov) {
       const statusEl = document.getElementById(`testStatus${prov.charAt(0).toUpperCase() + prov.slice(1)}`);
-      statusEl.className = "text-xs font-mono text-blue-400";
+      statusEl.className = "text-xs font-mono text-cyan-400";
       statusEl.textContent = `Connecting to ${prov}...`;
 
       let apiKey = "";
@@ -1123,7 +1860,6 @@
       }
     }
 
-    // Save Keys to .env
     async function saveAllKeys() {
       const payload = {
         ai_mode: document.getElementById("headerModeSelect").value,
@@ -1154,8 +1890,9 @@
     }
 
     function onModeChange() {
-      // Keep mode synchronized
+      // Keep mode active
     }
   </script>
 </body>
+
 </html>

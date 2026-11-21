@@ -1,0 +1,16 @@
+{
+  "name": "Test Invoice Template",
+  "fields": [
+    {
+      "key": "vendor_name",
+      "label": "Vendor"
+    },
+    {
+      "key": "total_amount",
+      "label": "Total",
+      "data_type": "number"
+    }
+  ],
+  "id": "test_invoice_template_1795279847",
+  "created_at": 1795279847.0634034
+}

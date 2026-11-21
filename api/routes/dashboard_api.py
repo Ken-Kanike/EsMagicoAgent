@@ -17,6 +17,8 @@ from pipeline.output_writer import write_output, read_output
 from ai_backends.router import get_backend
 from eval.harness import run_evaluation
 from eval.metrics import calculate_document_metrics
+from pipeline.pii_shield import PIIShield
+from pipeline.template_engine import TemplateEngine
 
 router = APIRouter(prefix="/api", tags=["Enterprise Operations & Telemetry"])
 
@@ -216,6 +218,192 @@ async def upload_and_extract(
         "data": res.data
     }
 
+@router.post("/batch-upload-and-extract")
+async def batch_upload_and_extract(
+    files: List[UploadFile] = File(...),
+    mode: Optional[str] = Form(None)
+):
+    """
+    Handle multi-file batch upload (drag & drop or folder selection).
+    Processes arbitrary new invoice documents in bulk and persists outputs.
+    """
+    temp_dir = settings.resolve_path("temp_upload")
+    temp_dir.mkdir(exist_ok=True)
+    backend = get_backend(mode or settings.ai_mode)
+    extractor = InvoiceExtractor(backend)
+
+    results = []
+
+    for f in files:
+        file_path = temp_dir / f.filename
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(f.file, buffer)
+
+        doc_id = file_path.stem.upper()
+        res = extractor.extract(file_path)
+
+        if res.data:
+            write_output(doc_id, res.data)
+
+        results.append({
+            "doc_id": doc_id,
+            "filename": f.filename,
+            "mode": backend.name,
+            "is_invoice": res.data.get("is_invoice") if res.data else False,
+            "vendor": res.data.get("vendor") if res.data else None,
+            "invoice_number": res.data.get("invoice_number") if res.data else None,
+            "invoice_date": res.data.get("invoice_date") if res.data else None,
+            "currency": res.data.get("currency") if res.data else None,
+            "tax_total": res.data.get("tax_total") if res.data else None,
+            "total": res.data.get("total") if res.data else None,
+            "needs_review": res.needs_review,
+            "review_reasons": res.review_reasons,
+            "line_items_count": len(res.data.get("line_items", [])) if res.data else 0,
+            "data": res.data
+        })
+
+    return {
+        "total_uploaded": len(files),
+        "results": results
+    }
+
+# -------------------------------------------------------------
+# 2b. ENTERPRISE PII SHIELD & GOVERNANCE
+# -------------------------------------------------------------
+
+@router.get("/pii/status")
+def get_pii_status():
+    """Retrieve PII shield protection status."""
+    return {
+        "enabled": getattr(settings, "pii_shield_enabled", True),
+        "protected_entities": [
+            "Bank Account / IBAN Numbers",
+            "Credit & Debit Cards",
+            "SSN / National Identification",
+            "PAN / Tax Registration IDs",
+            "Personal Contact Numbers",
+            "Personal Email Addresses"
+        ]
+    }
+
+@router.post("/pii/toggle")
+def toggle_pii_status(payload: Dict[str, Any]):
+    """Toggle PII sanitization shield on/off."""
+    enabled = bool(payload.get("enabled", True))
+    settings.pii_shield_enabled = enabled
+
+    # Persist in .env
+    env_path = settings.resolve_path(".env")
+    if env_path.exists():
+        with open(env_path, "r", encoding="utf-8") as f:
+            lines = f.readlines()
+        with open(env_path, "w", encoding="utf-8") as f:
+            for l in lines:
+                if l.startswith("PII_SHIELD_ENABLED="):
+                    continue
+                f.write(l)
+            f.write(f"PII_SHIELD_ENABLED={str(enabled).lower()}\n")
+
+    return {"status": "success", "enabled": enabled}
+
+@router.post("/pii/scan")
+def scan_text_pii(payload: Dict[str, Any]):
+    """Scan arbitrary document or text for PII leaks."""
+    text = payload.get("text", "")
+    res = PIIShield.sanitize_text(text, mask_enabled=True)
+    return {
+        "has_pii": res.has_pii,
+        "detected_types": res.detected_types,
+        "redaction_count": res.redaction_count,
+        "masked_sample": res.masked_text[:500]
+    }
+
+# -------------------------------------------------------------
+# 2c. DYNAMIC CUSTOM EXTRACTION TEMPLATE STUDIO
+# -------------------------------------------------------------
+
+@router.post("/templates/discover")
+async def discover_template_fields(
+    file: Optional[UploadFile] = File(None),
+    doc_id: Optional[str] = Form(None)
+):
+    """
+    Auto-discover all keys, headers, numbers, and candidate fields from an uploaded
+    or existing document to build a custom extraction template.
+    """
+    target_path = None
+    if file:
+        temp_dir = settings.resolve_path("temp_upload")
+        temp_dir.mkdir(exist_ok=True)
+        target_path = temp_dir / file.filename
+        with open(target_path, "wb") as buf:
+            shutil.copyfileobj(file.file, buf)
+    elif doc_id:
+        doc_id = doc_id.upper()
+        labelled_dir = settings.resolve_path(settings.labelled_dir)
+        unlabelled_dir = settings.resolve_path(settings.unlabelled_dir)
+        temp_dir = settings.resolve_path("temp_upload")
+        for f in [labelled_dir, unlabelled_dir, temp_dir]:
+            candidates = list(f.glob(f"{doc_id}.*"))
+            hit = next((c for c in candidates if c.suffix.lower() != ".json"), None)
+            if hit:
+                target_path = hit
+                break
+
+    if not target_path or not target_path.exists():
+        raise HTTPException(status_code=400, detail="Document could not be located for template discovery.")
+
+    discovery = TemplateEngine.discover_fields(target_path)
+    return discovery
+
+@router.get("/templates/list")
+def list_custom_templates():
+    """List all user-defined custom extraction templates."""
+    return {"templates": TemplateEngine.list_templates()}
+
+@router.post("/templates/save")
+def save_custom_template(template: Dict[str, Any]):
+    """Save or update custom extraction schema."""
+    saved = TemplateEngine.save_template(template)
+    return {"status": "success", "template": saved}
+
+@router.post("/templates/extract")
+async def extract_with_custom_template(
+    template_id: str = Form(...),
+    file: Optional[UploadFile] = File(None),
+    doc_id: Optional[str] = Form(None),
+    mode: Optional[str] = Form(None)
+):
+    """Run extraction against target file using user's custom defined template."""
+    tmpl = TemplateEngine.get_template(template_id)
+    if not tmpl:
+        raise HTTPException(status_code=404, detail=f"Template {template_id} not found.")
+
+    target_path = None
+    if file:
+        temp_dir = settings.resolve_path("temp_upload")
+        temp_dir.mkdir(exist_ok=True)
+        target_path = temp_dir / file.filename
+        with open(target_path, "wb") as buf:
+            shutil.copyfileobj(file.file, buf)
+    elif doc_id:
+        doc_id = doc_id.upper()
+        labelled_dir = settings.resolve_path(settings.labelled_dir)
+        unlabelled_dir = settings.resolve_path(settings.unlabelled_dir)
+        temp_dir = settings.resolve_path("temp_upload")
+        for f in [labelled_dir, unlabelled_dir, temp_dir]:
+            candidates = list(f.glob(f"{doc_id}.*"))
+            hit = next((c for c in candidates if c.suffix.lower() != ".json"), None)
+            if hit:
+                target_path = hit
+                break
+
+    if not target_path or not target_path.exists():
+        raise HTTPException(status_code=400, detail="Target document not found.")
+
+    res = TemplateEngine.extract_with_custom_template(target_path, tmpl, backend_mode=mode)
+    return res
+
 # -------------------------------------------------------------
 # 3. EXPORT EXCEL & JSON
 # -------------------------------------------------------------
@@ -319,6 +507,28 @@ def export_all_json_zip():
         zip_buffer,
         media_type="application/zip",
         headers={"Content-Disposition": "attachment; filename=esmagico_outputs_json.zip"}
+    )
+
+@router.post("/templates/export-excel")
+def export_custom_template_excel(payload: Dict[str, Any]):
+    """Export custom defined template extraction records to Excel."""
+    template_name = payload.get("template_name", "Custom_Template")
+    records = payload.get("records", [])
+
+    if not records:
+        raise HTTPException(status_code=400, detail="No records provided for export.")
+
+    df = pd.DataFrame(records)
+    output_buffer = io.BytesIO()
+    with pd.ExcelWriter(output_buffer, engine="openpyxl") as writer:
+        df.to_excel(writer, sheet_name=template_name[:30], index=False)
+
+    output_buffer.seek(0)
+    filename = f"{re.sub(r'[^a-zA-Z0-9_-]', '_', template_name)}_{time.strftime('%Y%m%d_%H%M%S')}.xlsx"
+    return StreamingResponse(
+        output_buffer,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
     )
 
 # -------------------------------------------------------------
