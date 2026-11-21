@@ -113,7 +113,7 @@ with tab_extract:
             doc_preview = load_document(selected_file_path)
             st.caption(f"Previewing: `{selected_file_path.name}` ({doc_preview.page_count} pages)")
             if doc_preview.images:
-                st.image(doc_preview.images[0], use_container_width=True)
+                st.image(doc_preview.images[0], use_column_width=True)
 
     with col_output:
         st.subheader("Structured Extraction Output")

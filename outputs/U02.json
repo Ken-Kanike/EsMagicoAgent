@@ -1,10 +1,16 @@
 {
-  "is_invoice": false,
-  "vendor": null,
-  "invoice_number": null,
+  "is_invoice": true,
+  "vendor": "Harborview Dental Supplies",
+  "invoice_number": "HDS-40417",
   "invoice_date": null,
-  "currency": null,
-  "line_items": null,
-  "tax_total": null,
-  "total": null
+  "currency": "USD",
+  "line_items": [
+    {
+      "description": "Popypast.mrt (a 200) Pebibs 1cs of 500) :.00 Suatota S125 S0175 Totat",
+      "quantity": 64.0,
+      "amount": 917.0
+    }
+  ],
+  "tax_total": 0.0,
+  "total": 917.0
 }

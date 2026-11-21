@@ -1,10 +1,36 @@
 {
-  "is_invoice": false,
-  "vendor": null,
-  "invoice_number": null,
-  "invoice_date": null,
-  "currency": null,
-  "line_items": null,
-  "tax_total": null,
-  "total": null
+  "is_invoice": true,
+  "vendor": "Metro Auto Parts",
+  "invoice_number": "MAP/D/09-0312",
+  "invoice_date": "2026-09-03",
+  "currency": "INR",
+  "line_items": [
+    {
+      "description": "# Description",
+      "quantity": 1850.0,
+      "amount": 8.0
+    },
+    {
+      "description": "Brakepadset,front(sedan)",
+      "quantity": 12.0,
+      "amount": 5040.0
+    },
+    {
+      "description": "Airfilterelement",
+      "quantity": 15.0,
+      "amount": 5700.0
+    },
+    {
+      "description": "Wiperblade20in（pair)",
+      "quantity": 20.0,
+      "amount": 39200.0
+    },
+    {
+      "description": "Engineoil5W-30,4Lcan",
+      "quantity": 310.0,
+      "amount": 18.0
+    }
+  ],
+  "tax_total": 9844.8,
+  "total": 90009.6
 }

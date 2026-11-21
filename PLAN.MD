@@ -2,9 +2,6 @@
 
 > **Assignment:** Es Magico AI Intern Assignment — Invoice Extraction Pipeline  
 > **Author:** Junaid Shaikh 
-> **Date:** 2026-11-21  
-> **Status:** Master blueprint — all lesser models / agents read this fully before writing any code
-
 ---
 
 ## Table of Contents

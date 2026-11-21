@@ -1,10 +1,16 @@
 {
-  "is_invoice": false,
-  "vendor": null,
-  "invoice_number": null,
-  "invoice_date": null,
-  "currency": null,
-  "line_items": null,
-  "tax_total": null,
-  "total": null
+  "is_invoice": true,
+  "vendor": "Amount(E)",
+  "invoice_number": "LP-10932",
+  "invoice_date": "2026-11-20",
+  "currency": "INR",
+  "line_items": [
+    {
+      "description": "INVOICE LeedsLS42AU,UnitedKingdom VATNo.GB276·119043 Unit3,KirkstallRoad Unit price（f) FROM Amountdue Qty VAT@20% Due date20Nov2026 InvoiceNo.LP-10932 Date210ct2026 POref.BAT-441 DETAILS Lakeside Printing Co ProspectusA424ppsaddle-stithd Letterhead120gsm(reamof500) Pull-upbanner850x2000mm LeedsLS61AA,UnitedKingdom Brightwell AcademyTrust",
+      "quantity": 2130.0,
+      "amount": 1500.0
+    }
+  ],
+  "tax_total": 0.0,
+  "total": 1500.0
 }

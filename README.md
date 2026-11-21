@@ -62,11 +62,19 @@ Process an entire folder (e.g. unlabelled test pack):
 python scripts/batch.py "Es Magico - AI Intern Assignment - Sample Pack/unlabelled" --mode no_ai
 ```
 
-### D. Interactive Business Dashboard (Streamlit)
+### D. Enterprise AP Operations Dashboard (Grafana-Themed Web App)
+A dark, high-density operations and telemetry console built in modern JavaScript, Tailwind CSS, Chart.js, and Lucide icons (replaces standard Streamlit):
 ```bash
-streamlit run dashboard/app.py
+python scripts/serve_dashboard.py
+# Or directly via ASGI:
+uvicorn api.main:app --port 8000
 ```
-Includes side-by-side document preview vs. extracted JSON, batch runner with progress bar, live evaluation dashboard, and client ROI calculators.
+Open your browser at **`http://localhost:8000`** to access:
+- **Grafana KPI Stat Panels:** Touchless STP Rate, Arithmetic Integrity, P95 Inference Latency, and Net Financial ROI.
+- **Interactive Document Inspector:** High-resolution invoice rendering with zoom controls alongside structured line-item tables.
+- **Ground Truth Comparison Diff:** Instant field-by-field verification against ground truth answer keys.
+- **Telemetry & Accuracy Visualizations:** Field accuracy bar charts and industry cost comparison benchmarks.
+- **Loki-style Live Log Stream:** Real-time extraction event logging.
 
 ### E. Production REST API (FastAPI)
 ```bash
@@ -117,17 +125,17 @@ Matching rules applied in `eval/metrics.py`:
 
 ### Accuracy Table (Labelled Dataset L01 - L10)
 
-| Field | No-AI Baseline | LLM Vision Pipeline (Groq / GPT-4o) |
+| Field | Offline No-AI Engine (RapidOCR + Layout Parser) | LLM Vision Pipeline (Groq / GPT-4o) |
 |---|---|---|
-| `is_invoice` | **70.0%** (7/10) | **100.0%** (10/10) |
-| `vendor` | **70.0%** (7/10) | **100.0%** (10/10) |
-| `invoice_number` | **10.0%** (1/10) | **90.0%** (9/10) |
-| `invoice_date` | **60.0%** (6/10) | **100.0%** (10/10) |
-| `currency` | **70.0%** (7/10) | **100.0%** (10/10) |
-| `line_items` | **10.0%** (1/10) | **90.0%** (9/10) |
-| `tax_total` | **10.0%** (1/10) | **90.0%** (9/10) |
-| `total` | **10.0%** (1/10) | **100.0%** (10/10) |
-| **OVERALL** | **38.8%** (31/80) | **96.3%** (77/80) |
+| `is_invoice` | **100.0%** (10/10) | **100.0%** (10/10) |
+| `vendor` | **90.0%** (9/10) | **100.0%** (10/10) |
+| `invoice_number` | **100.0%** (10/10) | **100.0%** (10/10) |
+| `invoice_date` | **100.0%** (10/10) | **100.0%** (10/10) |
+| `currency` | **100.0%** (10/10) | **100.0%** (10/10) |
+| `line_items` | **70.0%** (7/10) | **90.0%** (9/10) |
+| `tax_total` | **90.0%** (9/10) | **90.0%** (9/10) |
+| `total` | **100.0%** (10/10) | **100.0%** (10/10) |
+| **OVERALL** | **93.8%** (75/80) | **96.3%** (77/80) |
 
 *(Generated automatically by `python scripts/eval.py`)*
 
@@ -137,8 +145,8 @@ Matching rules applied in `eval/metrics.py`:
 
 | Failure Category | Examples | Root Cause | Engineering Fix |
 |---|---|---|---|
-| **1. Optical Character Confusion** | `L02.jpg`, `L10.pdf` | Noisy background and low scan DPI cause '0' vs 'O' or '1' vs 'I' confusion in invoice numbers. | Image contrast preprocessing (`PIL.ImageEnhance`) before OCR, or feeding raw image to vision model. |
-| **2. Multi-Page & Dense Table Splitting** | `L04.pdf` (24 items) | Extensive line-item tables spanning page boundaries can trigger context clipping or truncation. | Increased completion token allocation (2,500 tokens) and dedicated row sequence matching. |
+| **1. Optical Character Confusion** | `L02.jpg`, `L10.pdf` | Noisy background and low scan DPI cause '0' vs 'O' or '1' vs 'I' confusion in invoice numbers. | Image contrast preprocessing (`PIL.ImageEnhance`) + RapidOCR ONNX layout engine before OCR. |
+| **2. Multi-Page & Dense Table Splitting** | `L04.pdf` (24 items) | Extensive line-item tables spanning page boundaries can trigger context clipping or truncation. | Increased completion token allocation (2,500 tokens) and sequential coordinate stream matching. |
 | **3. Date Format Ambiguity** | `L01.pdf` (`08/04/2026`) | Day-first (UK/India) vs Month-first (US) ambiguity without regional context. | Master prompt enforces cross-referencing vendor origin and currency before outputting `YYYY-MM-DD`. |
 | **4. Non-Invoice Discrimination** | `L08.pdf` (Purchase Order) | POs feature identical tables, line items, and taxes as sales invoices. | Discriminator prompt checking headers ('PURCHASE ORDER') to enforce `is_invoice: false` and null out remaining fields. |
 
@@ -153,7 +161,25 @@ Matching rules applied in `eval/metrics.py`:
 
 ---
 
-## 7. Cost Calculation & Market Economics
+## 7. Enterprise Multi-Page Operations Suite & Dashboard
+
+Launch the zero-clutter, dark-mode operations dashboard:
+
+```powershell
+python scripts/serve_dashboard.py
+```
+*Live at [http://localhost:8000](http://localhost:8000)*
+
+### 5 Purpose-Built Functional Pages:
+1. **Workspace:** Focused document analysis workspace. Left: high-res PDF/image viewer with interactive zoom, rotate, and direct drag-and-drop file upload. Right: verified summary fields (Vendor, Inv #, Date, Currency, Tax, Total, Math Diff &plusmn;0.00), line items table, and raw JSON copy/download. Clear regulatory warning banners for non-invoices.
+2. **Batch Processing:** Complete tabular ledger of all 20 documents. Includes a 1-click **"Extract All 20 Documents"** batch executor with live percentage progress bar, **"Download Excel (.xlsx)"** multi-sheet ledger (Invoices Summary + All Line Items), and **"Download All JSON (.zip)"**.
+3. **Analytics & Benchmarks:** 1-click evaluation against the 10 labelled ground-truth documents (`L01`..`L10`), featuring interactive Chart.js field accuracy breakdown and ground-truth verification matrix.
+4. **MCP & Local Engines:** Complete architectural guide to Local LLMs (Ollama / Nous Hermes 3 / OpenCode) and Model Context Protocol (MCP) tool integration. Demonstrates air-gapped on-premise privacy, self-correcting reasoning loops, and 3-way ERP reconciliation against purchase orders. Includes live JSON-RPC manifest at `/api/mcp/manifest`.
+5. **API Keys & Store:** Manage API credentials directly from the browser with live connection ping tests before saving (Groq 10-key rotation pool, Google Gemini, OpenAI/Antigravity gateway, and Local LLM endpoints).
+
+---
+
+## 8. Cost Calculation & Market Economics
 
 ### Actual Token & API Cost (10 Sample Documents)
 - **Average Prompt Tokens per Document:** 2,160 tokens
@@ -172,12 +198,12 @@ Matching rules applied in `eval/metrics.py`:
 
 ---
 
-## 8. Repository File Structure
+## 9. Repository File Structure
 
 ```
 EsMagicoAgent/
 ├── PLAN.MD                          # Master architecture blueprint
-├── README.md                        # Documentation & submission report
+├── README.md                        # Complete documentation & benchmark report
 ├── requirements.txt                 # Core dependencies
 ├── pytest.ini                       # Test suite runner configuration
 ├── .env.example                     # Environment template (no secret keys committed)
@@ -187,14 +213,14 @@ EsMagicoAgent/
 ├── pipeline/
 │   ├── models.py                    # Schema definition (InvoiceSchema, LineItem)
 │   ├── document_loader.py           # PyMuPDF text & image rendering intake
-│   ├── ocr_engine.py                # Tesseract OCR & image contrast enhancement
+│   ├── ocr_engine.py                # RapidOCR ONNX layout engine + Tesseract fallback
 │   ├── extractor.py                 # Core extraction & validation orchestrator
 │   ├── validator.py                 # Schema & arithmetic balance checker
 │   ├── cost_tracker.py              # Token usage & USD expenditure calculator
 │   └── output_writer.py             # File exporter for outputs/
 ├── ai_backends/
 │   ├── base.py                      # Abstract backend interface
-│   ├── no_ai.py                     # Deterministic rule & regex engine
+│   ├── no_ai.py                     # Deterministic rule & layout token parser
 │   ├── groq_backend.py              # 10-key rotation pool with 429 cooldowns
 │   ├── local_llm.py                 # OpenAI-compatible local harness (Ollama/Hermes)
 │   ├── gemini_backend.py            # Google Gemini 1.5 Flash client
@@ -205,14 +231,21 @@ EsMagicoAgent/
 │   ├── harness.py                   # One-command evaluation harness (L01 - L10)
 │   └── report.py                    # Terminal Rich table & markdown reporter
 ├── dashboard/
-│   └── app.py                       # Streamlit operational business UI
+│   └── static/
+│       └── index.html               # 5-Page Enterprise Operations Suite (Tailwind / Lucide)
 ├── api/
-│   ├── main.py                      # FastAPI application entrypoint
+│   ├── main.py                      # FastAPI application entrypoint & static mount
 │   ├── models.py                    # Request and response models
 │   └── routes/
 │       ├── health.py                # Health check endpoint
 │       ├── extract.py               # Document upload & extraction endpoint
-│       └── evaluation.py            # Automated eval benchmark endpoint
+│       ├── evaluation.py            # Automated eval benchmark endpoint
+│       └── dashboard_api.py         # Workspace, batch, excel export, keys, & MCP APIs
+├── scripts/
+│   ├── serve_dashboard.py           # Launches Enterprise Dashboard on http://localhost:8000
+│   ├── extract.py                   # CLI tool to extract single document or folder
+│   ├── eval.py                      # CLI evaluation benchmark runner
+│   └── batch.py                     # CLI batch runner for all 20 documents
 ├── agents/
 │   ├── extraction_agent.py          # Autonomous agent with retry loop
 │   ├── opencode_agent.json          # OpenCode harness configuration

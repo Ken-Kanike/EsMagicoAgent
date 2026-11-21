@@ -1,38 +1,38 @@
 # EsMagico Invoice Extraction — Evaluation Report
 
-- **Backend Evaluated:** `No-AI (Rule-Based & Regex Engine)`
+- **Backend Evaluated:** `No-AI (Rule-Based & Layout Parser)`
 - **Dataset:** 10 Labelled Documents (`L01` - `L10`)
-- **Overall Field Accuracy:** **38.8%**
+- **Overall Field Accuracy:** **93.8%**
 - **Average Cost Per Doc:** `$0.000000 USD`
 
 ## 1. Field-Level Accuracy Table
 
 | Field | Correct | Total | Accuracy | Matching Rule Applied |
 |---|---|---|---|---|
-| `is_invoice` | 7 | 10 | **70.0%** | Exact boolean match (Non-invoice detection) |
-| `vendor` | 7 | 10 | **70.0%** | Fuzzy `token_set_ratio >= 85%` |
-| `invoice_number` | 1 | 10 | **10.0%** | Exact uppercase alphanumeric comparison |
-| `invoice_date` | 6 | 10 | **60.0%** | Exact ISO `YYYY-MM-DD` string match |
-| `currency` | 7 | 10 | **70.0%** | Exact 3-letter ISO 4217 code |
-| `line_items` | 1 | 10 | **10.0%** | Sequence match: fuzzy desc >=80%, amount within ±0.05 |
-| `tax_total` | 1 | 10 | **10.0%** | Absolute numeric difference <= 0.05 |
-| `total` | 1 | 10 | **10.0%** | Absolute numeric difference <= 0.05 |
-| **OVERALL** | **31** | **80** | **38.8%** | Aggregate Score |
+| `is_invoice` | 10 | 10 | **100.0%** | Exact boolean match (Non-invoice detection) |
+| `vendor` | 9 | 10 | **90.0%** | Fuzzy `token_set_ratio >= 85%` |
+| `invoice_number` | 10 | 10 | **100.0%** | Exact uppercase alphanumeric comparison |
+| `invoice_date` | 10 | 10 | **100.0%** | Exact ISO `YYYY-MM-DD` string match |
+| `currency` | 10 | 10 | **100.0%** | Exact 3-letter ISO 4217 code |
+| `line_items` | 7 | 10 | **70.0%** | Sequence match: fuzzy desc >=80%, amount within ±0.05 |
+| `tax_total` | 9 | 10 | **90.0%** | Absolute numeric difference <= 0.05 |
+| `total` | 10 | 10 | **100.0%** | Absolute numeric difference <= 0.05 |
+| **OVERALL** | **75** | **80** | **93.8%** | Aggregate Score |
 
 ## 2. Per-Document Breakdown Matrix
 
 | Document | File Name | `is_invoice` | `vendor` | `invoice_number` | `invoice_date` | `currency` | `line_items` | `tax_total` | `total` |
 |---|---|---|---|---|---|---|---|---|---|
-| **L01** | `L01.pdf` | ✅ Match | ✅ Match | ❌ Mismatch | ✅ Match | ✅ Match | ❌ Mismatch | ❌ Mismatch | ❌ Mismatch |
-| **L02** | `L02.jpg` | ❌ Mismatch | ❌ Mismatch | ❌ Mismatch | ❌ Mismatch | ❌ Mismatch | ❌ Mismatch | ❌ Mismatch | ❌ Mismatch |
-| **L03** | `L03.pdf` | ✅ Match | ✅ Match | ❌ Mismatch | ✅ Match | ✅ Match | ❌ Mismatch | ❌ Mismatch | ❌ Mismatch |
-| **L04** | `L04.pdf` | ✅ Match | ✅ Match | ❌ Mismatch | ✅ Match | ✅ Match | ❌ Mismatch | ❌ Mismatch | ❌ Mismatch |
-| **L05** | `L05.pdf` | ✅ Match | ✅ Match | ❌ Mismatch | ✅ Match | ✅ Match | ❌ Mismatch | ❌ Mismatch | ❌ Mismatch |
-| **L06** | `L06.pdf` | ✅ Match | ✅ Match | ❌ Mismatch | ✅ Match | ✅ Match | ❌ Mismatch | ❌ Mismatch | ❌ Mismatch |
-| **L07** | `L07.pdf` | ✅ Match | ✅ Match | ❌ Mismatch | ❌ Mismatch | ✅ Match | ❌ Mismatch | ❌ Mismatch | ❌ Mismatch |
+| **L01** | `L01.pdf` | ✅ Match | ✅ Match | ✅ Match | ✅ Match | ✅ Match | ✅ Match | ✅ Match | ✅ Match |
+| **L02** | `L02.jpg` | ✅ Match | ✅ Match | ✅ Match | ✅ Match | ✅ Match | ✅ Match | ✅ Match | ✅ Match |
+| **L03** | `L03.pdf` | ✅ Match | ✅ Match | ✅ Match | ✅ Match | ✅ Match | ✅ Match | ✅ Match | ✅ Match |
+| **L04** | `L04.pdf` | ✅ Match | ✅ Match | ✅ Match | ✅ Match | ✅ Match | ✅ Match | ✅ Match | ✅ Match |
+| **L05** | `L05.pdf` | ✅ Match | ✅ Match | ✅ Match | ✅ Match | ✅ Match | ✅ Match | ✅ Match | ✅ Match |
+| **L06** | `L06.pdf` | ✅ Match | ✅ Match | ✅ Match | ✅ Match | ✅ Match | ❌ Mismatch | ✅ Match | ✅ Match |
+| **L07** | `L07.pdf` | ✅ Match | ✅ Match | ✅ Match | ✅ Match | ✅ Match | ❌ Mismatch | ✅ Match | ✅ Match |
 | **L08** | `L08.pdf` | ✅ Match | ✅ Match | ✅ Match | ✅ Match | ✅ Match | ✅ Match | ✅ Match | ✅ Match |
-| **L09** | `L09.pdf` | ❌ Mismatch | ❌ Mismatch | ❌ Mismatch | ❌ Mismatch | ❌ Mismatch | ❌ Mismatch | ❌ Mismatch | ❌ Mismatch |
-| **L10** | `L10.pdf` | ❌ Mismatch | ❌ Mismatch | ❌ Mismatch | ❌ Mismatch | ❌ Mismatch | ❌ Mismatch | ❌ Mismatch | ❌ Mismatch |
+| **L09** | `L09.pdf` | ✅ Match | ❌ Mismatch | ✅ Match | ✅ Match | ✅ Match | ✅ Match | ✅ Match | ✅ Match |
+| **L10** | `L10.pdf` | ✅ Match | ✅ Match | ✅ Match | ✅ Match | ✅ Match | ❌ Mismatch | ❌ Mismatch | ✅ Match |
 
 ## 3. Failure Analysis & Root Cause Grouping
 

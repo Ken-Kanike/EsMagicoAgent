@@ -15,15 +15,22 @@ def get_backend(mode: Optional[str] = None) -> AIBackend:
         return NoAIBackend()
 
     elif selected_mode in ("groq", "groq_cloud"):
+        if not settings.groq_api_keys:
+            # Safe fallback if user has not yet entered keys in .env
+            return NoAIBackend()
         return GroqBackend()
 
     elif selected_mode in ("local", "ollama", "lmstudio", "opencode", "hermes"):
         return LocalLLMBackend()
 
     elif selected_mode in ("gemini", "google"):
+        if not settings.gemini_api_key:
+            return NoAIBackend()
         return GeminiBackend()
 
     elif selected_mode in ("openai", "gpt"):
+        if not settings.openai_api_key:
+            return NoAIBackend()
         return OpenAIBackend()
 
     elif selected_mode in ("antigravity", "agy"):
