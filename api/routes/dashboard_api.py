@@ -76,6 +76,105 @@ def list_documents():
 
     return {"documents": docs, "total": len(docs)}
 
+@router.post("/preview-file")
+async def preview_uploaded_file(file: UploadFile = File(...)):
+    """Render page 1 of any uploaded PDF or image file as a PNG preview."""
+    temp_dir = settings.resolve_path("temp_upload")
+    temp_dir.mkdir(exist_ok=True)
+    temp_path = temp_dir / f"preview_{int(time.time())}_{file.filename}"
+    with open(temp_path, "wb") as buf:
+        shutil.copyfileobj(file.file, buf)
+
+    doc_content = load_document(temp_path)
+    if not doc_content.is_readable or not doc_content.images:
+        raise HTTPException(status_code=400, detail="Cannot render document preview.")
+
+    buf = io.BytesIO()
+    doc_content.images[0].save(buf, format="PNG")
+    return Response(content=buf.getvalue(), media_type="image/png")
+
+@router.post("/batch/export-excel")
+def export_batch_records_to_excel(payload: Dict[str, Any]):
+    """Export currently processed batch records to Excel."""
+    records = payload.get("records", [])
+    if not records:
+        raise HTTPException(status_code=400, detail="No records provided for export.")
+
+    summary_rows = []
+    line_item_rows = []
+
+    for r in records:
+        doc_id = r.get("doc_id", "—")
+        filename = r.get("filename", "—")
+        is_inv = r.get("is_invoice", False)
+        vendor = r.get("vendor", "—")
+        inv_num = r.get("invoice_number", "—")
+        inv_date = r.get("invoice_date", "—")
+        curr = r.get("currency", "—")
+        tax = r.get("tax_total", 0.0)
+        tot = r.get("total", 0.0)
+        status = "PASSED" if is_inv else "NON-INVOICE"
+
+        summary_rows.append({
+            "Document ID": doc_id,
+            "File Name": filename,
+            "Is Invoice": "YES" if is_inv else "NO",
+            "Vendor": vendor,
+            "Invoice Number": inv_num,
+            "Date": inv_date,
+            "Currency": curr,
+            "Tax Total": tax if tax is not None else 0.0,
+            "Grand Total": tot if tot is not None else 0.0,
+            "Status": status
+        })
+
+        items = r.get("data", {}).get("line_items", []) or []
+        for idx, it in enumerate(items, 1):
+            line_item_rows.append({
+                "Document ID": doc_id,
+                "Item #": idx,
+                "Vendor": vendor,
+                "Currency": curr,
+                "Description": it.get("description", "—"),
+                "Quantity": it.get("quantity", "—"),
+                "Amount": it.get("amount", 0.0)
+            })
+
+    output_buffer = io.BytesIO()
+    with pd.ExcelWriter(output_buffer, engine="openpyxl") as writer:
+        pd.DataFrame(summary_rows).to_excel(writer, sheet_name="Batch Invoices", index=False)
+        pd.DataFrame(line_item_rows if line_item_rows else [{"Info": "No line items"}]).to_excel(writer, sheet_name="Line Items", index=False)
+
+    output_buffer.seek(0)
+    filename = f"Batch_Extraction_{time.strftime('%Y%m%d_%H%M%S')}.xlsx"
+    return StreamingResponse(
+        output_buffer,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
+@router.post("/batch/export-zip")
+def export_batch_records_to_zip(payload: Dict[str, Any]):
+    """Export currently processed batch records to JSON zip archive."""
+    records = payload.get("records", [])
+    if not records:
+        raise HTTPException(status_code=400, detail="No records provided for export.")
+
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
+        for r in records:
+            doc_id = r.get("doc_id", "doc")
+            data = r.get("data") or r
+            zf.writestr(f"{doc_id}.json", json.dumps(data, indent=2))
+
+    zip_buffer.seek(0)
+    filename = f"Batch_JSON_{time.strftime('%Y%m%d_%H%M%S')}.zip"
+    return StreamingResponse(
+        zip_buffer,
+        media_type="application/zip",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
 @router.get("/documents/{doc_id}/preview")
 def get_document_preview(doc_id: str, page: int = Query(0, ge=0)):
     """Render and stream page preview as high-resolution PNG."""
@@ -92,6 +191,16 @@ def get_document_preview(doc_id: str, page: int = Query(0, ge=0)):
             if f:
                 target_file = f
                 break
+
+    if not target_file:
+        for folder in [upload_dir, labelled_dir, unlabelled_dir]:
+            if folder.exists():
+                for f in folder.iterdir():
+                    if f.suffix.lower() != ".json" and (f.stem.lower() == doc_id.lower() or f.name.lower() == doc_id.lower()):
+                        target_file = f
+                        break
+                if target_file:
+                    break
 
     if not target_file:
         raise HTTPException(status_code=404, detail=f"Document {doc_id} not found.")
@@ -149,6 +258,16 @@ def extract_single_sample(doc_id: str, mode: Optional[str] = Query(None)):
             if f:
                 target_file = f
                 break
+
+    if not target_file:
+        for folder in [upload_dir, labelled_dir, unlabelled_dir]:
+            if folder.exists():
+                for f in folder.iterdir():
+                    if f.suffix.lower() != ".json" and (f.stem.lower() == doc_id.lower() or f.name.lower() == doc_id.lower()):
+                        target_file = f
+                        break
+                if target_file:
+                    break
 
     if not target_file:
         raise HTTPException(status_code=404, detail=f"Document {doc_id} not found.")
@@ -245,6 +364,7 @@ async def batch_upload_and_extract(
         if res.data:
             write_output(doc_id, res.data)
 
+        items = (res.data.get("line_items") or []) if res.data else []
         results.append({
             "doc_id": doc_id,
             "filename": f.filename,
@@ -258,7 +378,7 @@ async def batch_upload_and_extract(
             "total": res.data.get("total") if res.data else None,
             "needs_review": res.needs_review,
             "review_reasons": res.review_reasons,
-            "line_items_count": len(res.data.get("line_items", [])) if res.data else 0,
+            "line_items_count": len(items),
             "data": res.data
         })
 

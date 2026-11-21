@@ -62,19 +62,20 @@ Process an entire folder (e.g. unlabelled test pack):
 python scripts/batch.py "Es Magico - AI Intern Assignment - Sample Pack/unlabelled" --mode no_ai
 ```
 
-### D. Enterprise AP Operations Dashboard (Grafana-Themed Web App)
-A dark, high-density operations and telemetry console built in modern JavaScript, Tailwind CSS, Chart.js, and Lucide icons (replaces standard Streamlit):
+### D. Enterprise AP Operations Platform (Dark Industry Suite)
+A dark, high-density operations console built in modern JavaScript, Tailwind CSS, Chart.js, and Lucide icons:
 ```bash
 python scripts/serve_dashboard.py
-# Or directly via ASGI:
-uvicorn api.main:app --port 8000
+# Or with an optional custom port:
+python scripts/serve_dashboard.py --port 8000
 ```
 Open your browser at **`http://localhost:8000`** to access:
-- **Grafana KPI Stat Panels:** Touchless STP Rate, Arithmetic Integrity, P95 Inference Latency, and Net Financial ROI.
-- **Interactive Document Inspector:** High-resolution invoice rendering with zoom controls alongside structured line-item tables.
-- **Ground Truth Comparison Diff:** Instant field-by-field verification against ground truth answer keys.
-- **Telemetry & Accuracy Visualizations:** Field accuracy bar charts and industry cost comparison benchmarks.
-- **Loki-style Live Log Stream:** Real-time extraction event logging.
+- **Workspace:** Split layout with high-resolution document viewer (zoom in/out/reset, direct file drag-and-drop) alongside verified summary fields, line items table, and raw JSON.
+- **Batch Ingestion Hub:** Drag and drop arbitrary batches of new invoices with multi-file queueing, real-time extraction progress bar, and 1-click **Excel (.xlsx)** and **JSON (.zip)** exports strictly for uploaded files.
+- **Dynamic Template Studio:** Upload any document (or select an existing one), view its live rendered visual preview, auto-discover all entities (`Key: Value`, tables, dates, amounts), define custom output schemas, and save reusable OCR templates.
+- **Evaluation Benchmark:** 1-click automated benchmark against the 10 labelled ground-truth documents (`L01`..`L10`) with field-by-field accuracy charts and verification matrix.
+- **Model Context Protocol (MCP):** Live JSON-RPC tools manifest endpoint (`/api/mcp/manifest`) for external agents (Antigravity, OpenCode, Hermes).
+- **Security Governance & Keys:** Live PII Redaction Shield status toggle and multi-key connection tester for Groq, Gemini, OpenAI, and Local LLMs before writing to `.env`.
 
 ### E. Production REST API (FastAPI)
 ```bash
@@ -161,25 +162,61 @@ Matching rules applied in `eval/metrics.py`:
 
 ---
 
-## 7. Enterprise Multi-Page Operations Suite & Dashboard
+## 7. Enterprise Multi-Page Operations Platform & Dashboard
 
-Launch the zero-clutter, dark-mode operations dashboard:
+Launch the dark, industrial-grade operations platform:
 
 ```powershell
 python scripts/serve_dashboard.py
+# Or bind to an alternate port if desired:
+python scripts/serve_dashboard.py --port 8080
 ```
 *Live at [http://localhost:8000](http://localhost:8000)*
 
-### 5 Purpose-Built Functional Pages:
-1. **Workspace:** Focused document analysis workspace. Left: high-res PDF/image viewer with interactive zoom, rotate, and direct drag-and-drop file upload. Right: verified summary fields (Vendor, Inv #, Date, Currency, Tax, Total, Math Diff &plusmn;0.00), line items table, and raw JSON copy/download. Clear regulatory warning banners for non-invoices.
-2. **Batch Processing:** Complete tabular ledger of all 20 documents. Includes a 1-click **"Extract All 20 Documents"** batch executor with live percentage progress bar, **"Download Excel (.xlsx)"** multi-sheet ledger (Invoices Summary + All Line Items), and **"Download All JSON (.zip)"**.
-3. **Analytics & Benchmarks:** 1-click evaluation against the 10 labelled ground-truth documents (`L01`..`L10`), featuring interactive Chart.js field accuracy breakdown and ground-truth verification matrix.
-4. **MCP & Local Engines:** Complete architectural guide to Local LLMs (Ollama / Nous Hermes 3 / OpenCode) and Model Context Protocol (MCP) tool integration. Demonstrates air-gapped on-premise privacy, self-correcting reasoning loops, and 3-way ERP reconciliation against purchase orders. Includes live JSON-RPC manifest at `/api/mcp/manifest`.
-5. **API Keys & Store:** Manage API credentials directly from the browser with live connection ping tests before saving (Groq 10-key rotation pool, Google Gemini, OpenAI/Antigravity gateway, and Local LLM endpoints).
+### 6 Dedicated Operations Pages:
+1. **Workspace:** Split layout with a high-resolution PDF/image document viewer on the left (interactive zoom, rotate, and direct drag-and-drop file intake) alongside verified summary fields (Vendor, Inv #, Date, Currency, Tax, Total, ±0.00 Arithmetic Balance badge), interactive line items table, and schema-compliant JSON copy/download. When non-invoices (`L08`, `U06`, `U10`) are loaded, a clear regulatory banner explains the null schema rule.
+2. **Batch Ingestion Hub:** Purpose-built for new arbitrary document batches. Starts empty by default. Drag & drop 5, 20, 50+ files at once, preview queued file chips, execute batch extraction with real-time percentage progress, and export **strictly the uploaded files** to multi-sheet **Excel (.xlsx)** and **JSON (.zip)**.
+3. **Template Studio:** Visual OCR template builder. Upload any novel document format, inspect its high-resolution rendering, auto-discover all entities (`Key: Value` pairs, tables, dates, numbers), customize field keys and labels, add arbitrary custom fields, save templates to browser `localStorage` and backend `templates/`, and run custom-schema extraction.
+4. **Evaluation Benchmark:** 1-click evaluation against the 10 labelled ground-truth answers (`L01` through `L10`), featuring interactive Chart.js field accuracy breakdown and ground-truth verification matrix.
+5. **MCP Tools Manifest:** Complete architectural guide to Local LLMs (Ollama / Nous Hermes 3 / OpenCode) and Model Context Protocol (MCP) tool integration. Demonstrates air-gapped on-premise privacy, self-correcting reasoning loops, and 3-way ERP reconciliation against purchase orders. Includes live JSON-RPC manifest at `/api/mcp/manifest`.
+6. **Security & API Store:** Manage API credentials directly from the browser with live connection ping tests before saving (Groq 10-key rotation pool, Google Gemini, OpenAI/Antigravity gateway, and Local LLM endpoints). Includes the live **Cloud PII Redaction & Privacy Shield** toggle.
 
 ---
 
-## 8. Cost Calculation & Market Economics
+## 8. Cloud PII Redaction & Privacy Shield
+
+Vendor invoices often contain sensitive banking details, national tax IDs, and confidential commercial contact info. When utilizing external cloud models (Groq, OpenAI, Google Gemini), our **PII Shield** (`pipeline/pii_shield.py`) guarantees data privacy:
+
+* **Automatic Sanitization:** Scans raw text before transmitting prompts to cloud APIs, intercepting:
+  - **Bank Account / IBAN Numbers** (regex matching standard IBANs and 9–18 digit account sequences).
+  - **Credit & Debit Card Numbers** (13–19 digit Luhn-like sequences).
+  - **National Identification & Tax IDs** (US SSN `XXX-XX-XXXX`, Indian PAN `[A-Z]{5}[0-9]{4}[A-Z]`).
+  - **Personal Contact Numbers & Personal Emails**.
+* **Zero Leak Guarantee:** Third-party cloud models only receive masked tokens (e.g. `[REDACTED_BANK_ACC_0]`, `[REDACTED_PHONE_1]`).
+* **Local Reversible Restoration:** Once structured outputs return, the local pipeline safely restores legitimate values in memory so your local ledger and database remain 100% complete and accurate.
+* **Governance UI:** Active status badge in the top navbar (`● PII Shield Active`) with toggle controls in the Security page.
+
+---
+
+## 9. Dynamic Template Studio & Custom Field Definition
+
+To handle atypical or non-standard documents (hall tickets, logistics waybills, freight receipts, medical claims) without modifying core code:
+
+1. **Visual Document Intake:** Upload any PDF or image (`.jpg`, `.jpeg`, `.png`) to inspect page 1 in the interactive preview container.
+2. **Deep Entity Discovery:** `POST /api/templates/discover` scans the document and surfaces:
+   - Colon-separated pairs (`Key: Value`) across the text.
+   - Document references, dates, due dates, amounts, taxes, and tables.
+   - Portal URLs and web references.
+3. **Interactive Schema Builder:**
+   - Select which fields to include via checkboxes.
+   - Rename display labels or edit field keys.
+   - Use **"Add Field"** to add custom user-defined keys (e.g., `seat_number`, `prn_number`, `tracking_id`).
+4. **Persistent Template Store:** Save templates by name (e.g., *"University Hall Ticket"*, *"Amazon Logistics Waybill"*). Templates persist in browser `localStorage` and backend `templates/*.json`.
+5. **Execution & Export:** Click **"Extract Document Using This Template"** to extract custom structured records matching your schema, downloadable as custom JSON or formatted Excel.
+
+---
+
+## 10. Cost Calculation & Market Economics
 
 ### Actual Token & API Cost (10 Sample Documents)
 - **Average Prompt Tokens per Document:** 2,160 tokens
@@ -198,7 +235,7 @@ python scripts/serve_dashboard.py
 
 ---
 
-## 9. Repository File Structure
+## 11. Repository File Structure
 
 ```
 EsMagicoAgent/
@@ -214,6 +251,8 @@ EsMagicoAgent/
 │   ├── models.py                    # Schema definition (InvoiceSchema, LineItem)
 │   ├── document_loader.py           # PyMuPDF text & image rendering intake
 │   ├── ocr_engine.py                # RapidOCR ONNX layout engine + Tesseract fallback
+│   ├── pii_shield.py                # Cloud PII Redaction & Privacy Shield (Banks, SSN, PAN)
+│   ├── template_engine.py           # Dynamic Template Studio & Custom Entity Discovery
 │   ├── extractor.py                 # Core extraction & validation orchestrator
 │   ├── validator.py                 # Schema & arithmetic balance checker
 │   ├── cost_tracker.py              # Token usage & USD expenditure calculator
@@ -232,7 +271,8 @@ EsMagicoAgent/
 │   └── report.py                    # Terminal Rich table & markdown reporter
 ├── dashboard/
 │   └── static/
-│       └── index.html               # 5-Page Enterprise Operations Suite (Tailwind / Lucide)
+│       └── index.html               # 6-Page Enterprise Operations Suite (Tailwind / Lucide)
+├── templates/                       # Persistent JSON storage for user-defined OCR templates
 ├── api/
 │   ├── main.py                      # FastAPI application entrypoint & static mount
 │   ├── models.py                    # Request and response models

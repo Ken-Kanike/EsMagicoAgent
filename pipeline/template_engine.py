@@ -155,9 +155,27 @@ class TemplateEngine:
         # 9. Line Items table placeholder
         add_field("line_items", "Line Items Table", "[Array of Descriptions, Qty, Rates, Amounts]", "array")
 
+        # 10. Generic Key-Value Pair Discovery (Captures any Colon-separated fields like Seat No, PRN, College, PO, etc.)
+        for line in lines:
+            kv_match = re.match(r'^([A-Za-z0-9\s/_\.\(\)\-]{2,35})\s*[:=]\s*(.+)$', line)
+            if kv_match:
+                raw_k = kv_match.group(1).strip()
+                raw_v = kv_match.group(2).strip()
+                if raw_k.lower() in ("http", "https") or len(raw_v) < 1:
+                    continue
+                dtype = "number" if re.match(r'^-?[\d,]+(?:\.\d+)?$', raw_v) else "string"
+                if re.match(r'^\d{4}[-/]\d{1,2}[-/]\d{1,2}$', raw_v):
+                    dtype = "date"
+                add_field(raw_k, raw_k.title(), raw_v, dtype)
+
+        # 11. URLs and Web Portals
+        urls = re.findall(r'https?://[^\s]+', text)
+        if urls:
+            add_field("portal_url", "Portal URL / Website", urls[0])
+
         return {
             "file_name": file_path.name,
-            "text_sample": text[:800],
+            "text_sample": text[:1200],
             "discovered_fields": discovered
         }
 
