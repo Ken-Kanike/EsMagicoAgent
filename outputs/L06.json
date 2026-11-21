@@ -1,0 +1,10 @@
+{
+  "is_invoice": true,
+  "vendor": "Anand & Rao Associates  |  AR/2026/0093",
+  "invoice_number": "Anand",
+  "invoice_date": "2026-05-30",
+  "currency": "INR",
+  "line_items": null,
+  "tax_total": 0.0,
+  "total": null
+}

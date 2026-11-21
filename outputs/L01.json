@@ -1,0 +1,10 @@
+{
+  "is_invoice": true,
+  "vendor": "Northwind Logistics Ltd  |  NWL-88213",
+  "invoice_number": "BILL",
+  "invoice_date": "2026-04-08",
+  "currency": "GBP",
+  "line_items": null,
+  "tax_total": 0.0,
+  "total": null
+}

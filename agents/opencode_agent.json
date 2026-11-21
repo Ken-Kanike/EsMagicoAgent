@@ -1,0 +1,37 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "name": "EsMagico Invoice Intelligence Agent",
+  "version": "1.0.0",
+  "provider": {
+    "groq": {
+      "npm": "@ai-sdk/openai-compatible",
+      "options": {
+        "baseURL": "https://api.groq.com/openai/v1",
+        "apiKey": "${GROQ_API_KEY_1}"
+      },
+      "models": {
+        "llama-3.3-70b-versatile": {
+          "name": "Llama 3.3 70B Versatile"
+        },
+        "meta-llama/llama-4-scout-17b-16e-instruct": {
+          "name": "Llama 4 Scout (Vision)"
+        }
+      }
+    },
+    "local": {
+      "npm": "@ai-sdk/openai-compatible",
+      "options": {
+        "baseURL": "${LOCAL_LLM_BASE_URL:-http://localhost:11434/v1}",
+        "apiKey": "local-key"
+      },
+      "models": {
+        "qwen2.5-vl:7b": {
+          "name": "Qwen 2.5 Vision 7B"
+        },
+        "nous-hermes3": {
+          "name": "Nous Hermes 3"
+        }
+      }
+    }
+  }
+}

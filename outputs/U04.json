@@ -1,0 +1,10 @@
+{
+  "is_invoice": true,
+  "vendor": "Bluefin Cloud Services Inc.  |  BF-2026-07-11874",
+  "invoice_number": "BILL",
+  "invoice_date": "2026-07-01",
+  "currency": "USD",
+  "line_items": null,
+  "tax_total": 0.0,
+  "total": null
+}

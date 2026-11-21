@@ -1,0 +1,10 @@
+{
+  "is_invoice": true,
+  "vendor": "Blue Lotus Hospitality  |  BL/GA/26/5528",
+  "invoice_number": "Blue",
+  "invoice_date": null,
+  "currency": "INR",
+  "line_items": null,
+  "tax_total": 0.0,
+  "total": null
+}
