@@ -324,9 +324,9 @@
             <!-- Validation Status Bar -->
             <div id="bannerValidation"
               class="bg-emerald-950/30 border border-emerald-800/60 p-3 rounded flex items-center justify-between text-xs">
-              <div class="flex items-center space-x-2 text-emerald-300">
+              <div id="validationTextWrap" class="flex items-center space-x-2 text-emerald-300">
                 <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400"></i>
-                <span id="validationText" class="font-medium">Schema Conformed & Arithmetic Balanced</span>
+                <span id="validationText" class="font-medium">—</span>
               </div>
               <div id="mathDiffBadge"
                 class="font-mono text-xs text-emerald-400 bg-emerald-900/40 px-2 py-0.5 rounded font-bold">
@@ -576,6 +576,11 @@
             <i data-lucide="plus" class="w-3.5 h-3.5"></i>
             <span>New Template</span>
           </button>
+          <button onclick="deleteSelectedTemplate()"
+            class="bg-[#181d2c] hover:bg-[#20273c] border border-[#20273c] text-rose-300 text-xs px-3 py-1.5 rounded flex items-center space-x-1">
+            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            <span>Delete</span>
+          </button>
         </div>
       </div>
 
@@ -757,23 +762,23 @@
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div class="ent-card p-4">
           <div class="text-xs text-slate-400">Field Accuracy Benchmark</div>
-          <div id="benchOverallAcc" class="text-2xl font-bold font-mono text-emerald-400 mt-1">93.8%</div>
-          <div class="text-[11px] text-slate-500 mt-0.5">75 / 80 Fields Verified</div>
+          <div id="benchOverallAcc" class="text-2xl font-bold font-mono text-emerald-400 mt-1">—</div>
+          <div id="benchOverallSub" class="text-[11px] text-slate-500 mt-0.5">No run yet</div>
         </div>
         <div class="ent-card p-4">
-          <div class="text-xs text-slate-400">Non-Invoice Precision</div>
-          <div class="text-2xl font-bold font-mono text-blue-400 mt-1">100.0%</div>
-          <div class="text-[11px] text-slate-500 mt-0.5">Purchase Orders & Statements Isolated</div>
+          <div class="text-xs text-slate-400">Documents Fully Correct</div>
+          <div id="benchDocsCorrect" class="text-2xl font-bold font-mono text-blue-400 mt-1">—</div>
+          <div id="benchRowsSub" class="text-[11px] text-slate-500 mt-0.5">Line-item row precision / recall</div>
         </div>
         <div class="ent-card p-4">
-          <div class="text-xs text-slate-400">Date & Currency Accuracy</div>
-          <div class="text-2xl font-bold font-mono text-emerald-400 mt-1">100.0%</div>
-          <div class="text-[11px] text-slate-500 mt-0.5">ISO 8601 & ISO 4217 Match</div>
+          <div class="text-xs text-slate-400">Cost per Document</div>
+          <div id="benchCost" class="text-2xl font-bold font-mono text-emerald-400 mt-1">—</div>
+          <div id="benchCostSub" class="text-[11px] text-slate-500 mt-0.5">Measured tokens × list price</div>
         </div>
         <div class="ent-card p-4">
-          <div class="text-xs text-slate-400">Grand Total Precision</div>
-          <div class="text-2xl font-bold font-mono text-indigo-400 mt-1">100.0%</div>
-          <div class="text-[11px] text-slate-500 mt-0.5">&plusmn;0.05 Arithmetic Tolerance</div>
+          <div class="text-xs text-slate-400">needs_review Recall</div>
+          <div id="benchReview" class="text-2xl font-bold font-mono text-indigo-400 mt-1">—</div>
+          <div id="benchReviewSub" class="text-[11px] text-slate-500 mt-0.5">Share of erroneous docs that were flagged</div>
         </div>
       </div>
 
@@ -1047,9 +1052,15 @@
 
     window.addEventListener("DOMContentLoaded", async () => {
       lucide.createIcons();
+      try {
+        const h = await (await fetch("/health")).json();
+        const sel = document.getElementById("headerModeSelect");
+        if (h.active_mode && [...sel.options].some(o => o.value === h.active_mode)) sel.value = h.active_mode;
+      } catch (e) { /* keep first option */ }
       await loadDocumentList();
       await loadSelectedDocument();
       initAnalyticsChart();
+      loadLatestBenchmark();
       loadMcpManifest();
       initWorkspaceDragAndDrop();
       initBatchDragAndDrop();
@@ -1121,7 +1132,7 @@
         const outJson = await outRes.json();
         if (outJson.exists && outJson.data) {
           currentDocData = outJson.data;
-          renderData(currentDocData);
+          renderData(currentDocData, { saved: true });
         } else {
           await extractCurrentDocument();
         }
@@ -1138,8 +1149,10 @@
       try {
         const res = await fetch(`/api/extract/${currentDocId}?mode=${mode}`, { method: "POST" });
         const json = await res.json();
+        if (!res.ok) throw new Error(json.detail || `HTTP ${res.status}`);
+        if (json.error) throw new Error(`${json.error_type}: ${json.error}`);
         currentDocData = json.data;
-        renderData(currentDocData);
+        renderData(currentDocData, json);
       } catch (e) {
         alert("Extraction error: " + e.message);
       } finally {
@@ -1148,7 +1161,7 @@
       }
     }
 
-    function renderData(data) {
+    function renderData(data, meta = {}) {
       if (!data) return;
 
       const isInv = data.is_invoice;
@@ -1162,7 +1175,18 @@
       } else {
         bannerNonInv.classList.add("hidden");
         bannerVal.classList.remove("hidden");
-        valText.textContent = "Schema Conformed & Arithmetic Balanced";
+        const wrap = document.getElementById("validationTextWrap");
+        if (meta.saved) {
+          valText.textContent = "Saved output from the last CLI run (outputs/). Click Extract to re-validate.";
+          wrap.className = "flex items-center space-x-2 text-slate-300";
+        } else if (meta.needs_review) {
+          valText.textContent = "Needs review: " + (meta.review_reasons || []).join(" | ");
+          wrap.className = "flex items-center space-x-2 text-amber-300";
+        } else {
+          const calls = meta.cost ? ` - ${meta.cost.calls} call(s), ${meta.cost.tokens_in}/${meta.cost.tokens_out} tokens` : "";
+          valText.textContent = `Schema valid & arithmetic balanced (${meta.mode || ""})${calls}`;
+          wrap.className = "flex items-center space-x-2 text-emerald-300";
+        }
       }
 
       document.getElementById("fldVendor").textContent = data.vendor || "—";
@@ -1286,7 +1310,12 @@
         select.prepend(opt);
         select.value = json.doc_id;
 
-        await loadSelectedDocument();
+        if (!res.ok) throw new Error(json.detail || `HTTP ${res.status}`);
+        if (json.error) throw new Error(`${json.error_type}: ${json.error}`);
+        document.getElementById("viewerFilename").textContent = json.filename;
+        document.getElementById("docPreviewImg").src = `/api/documents/${json.doc_id}/preview?t=${Date.now()}`;
+        currentDocData = json.data;
+        renderData(currentDocData, json);
       } catch (e) {
         alert("Upload error: " + e.message);
       } finally {
@@ -1434,36 +1463,70 @@
 
       btn.disabled = true;
       progContainer.classList.remove("hidden");
-      progStatus.textContent = `Uploading and processing ${queuedBatchFiles.length} files...`;
-      progBar.style.width = `20%`;
-      progPercent.textContent = `20%`;
+      const setProgress = (done, total, text) => {
+        const pct = total ? Math.round((done / total) * 100) : 0;
+        progBar.style.width = `${pct}%`;
+        progPercent.textContent = `${pct}%`;
+        progStatus.textContent = text;
+      };
+      setProgress(0, queuedBatchFiles.length, `Uploading ${queuedBatchFiles.length} files...`);
 
       const formData = new FormData();
       queuedBatchFiles.forEach(f => formData.append("files", f));
       formData.append("mode", document.getElementById("headerModeSelect").value);
 
       try {
-        const res = await fetch("/api/batch-upload-and-extract", { method: "POST", body: formData });
+        // Job-based: the server returns immediately and processes in the background.
+        const res = await fetch("/api/batch/jobs", { method: "POST", body: formData });
         if (!res.ok) {
           const errText = await res.text();
           throw new Error(`Server returned ${res.status}: ${errText}`);
         }
-        const json = await res.json();
-
-        progBar.style.width = `100%`;
-        progPercent.textContent = `100%`;
-        progStatus.textContent = `Batch extraction complete for ${json.total_uploaded} uploaded documents!`;
-
-        // Store and render strictly the uploaded files!
-        processedBatchRecords = json.results || [];
-        renderBatchLedgerTable();
+        const { job_id, total } = await res.json();
         clearBatchQueue();
+
+        let job = null;
+        while (true) {
+          await new Promise(r => setTimeout(r, 1000));
+          const jr = await fetch(`/api/batch/jobs/${job_id}`);
+          if (!jr.ok) throw new Error(`Job poll failed (${jr.status})`);
+          job = await jr.json();
+          processedBatchRecords = job.results || [];
+          renderBatchLedgerTable();
+          const last = job.last_file ? ` - last: ${job.last_file}` : "";
+          setProgress(job.done, job.total || total,
+            `Processed ${job.done}/${job.total || total} documents (${job.elapsed_s}s)${last}`);
+          if (job.status === "completed" || job.status === "failed") break;
+        }
+
+        if (job.status === "failed") throw new Error(job.error || "Batch job failed");
+        const flagged = processedBatchRecords.filter(r => r.needs_review || r.error).length;
+        setProgress(job.total, job.total,
+          `Batch complete: ${job.total} documents in ${job.elapsed_s}s - ${flagged} need review.`);
       } catch (e) {
         alert("Batch error: " + e.message);
       } finally {
         btn.disabled = false;
         updateBatchUI();
       }
+    }
+
+    function escapeHtml(s) {
+      return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    }
+
+    function batchStatusBadge(r) {
+      if (r.error) {
+        return `<span title="${escapeHtml(r.error)}" class="bg-rose-950/80 text-rose-300 border border-rose-800 text-[10px] px-2 py-0.5 rounded font-bold">ERROR</span>`;
+      }
+      if (r.needs_review) {
+        const why = escapeHtml((r.review_reasons || []).join("; "));
+        return `<span title="${why}" class="bg-amber-950/80 text-amber-300 border border-amber-800 text-[10px] px-2 py-0.5 rounded font-bold">NEEDS REVIEW</span>`;
+      }
+      if (r.needs_review === undefined) {
+        return `<span class="text-slate-500 text-[10px]">saved output</span>`;
+      }
+      return `<span class="bg-emerald-950/80 text-emerald-300 border border-emerald-800 text-[10px] px-2 py-0.5 rounded font-bold">VALID</span>`;
     }
 
     function renderBatchLedgerTable() {
@@ -1492,7 +1555,7 @@
           <td class="p-3 text-slate-300 font-mono">${r.invoice_date || "—"}</td>
           <td class="p-3 text-right font-mono text-slate-400">${taxStr}</td>
           <td class="p-3 text-right font-mono font-bold text-white">${totStr}</td>
-          <td class="p-3 text-center"><span class="bg-emerald-950/80 text-emerald-300 border border-emerald-800 text-[10px] px-2 py-0.5 rounded font-bold">VERIFIED</span></td>
+          <td class="p-3 text-center">${batchStatusBadge(r)}</td>
         </tr>`;
       });
 
@@ -1630,10 +1693,13 @@
       const formData = new FormData();
       if (studioSelectedFile) formData.append("file", studioSelectedFile);
       if (sampleId) formData.append("doc_id", sampleId);
+      formData.append("mode", document.getElementById("headerModeSelect").value);
 
       try {
         const res = await fetch("/api/templates/discover", { method: "POST", body: formData });
         const json = await res.json();
+        if (!res.ok) throw new Error(json.detail || `HTTP ${res.status}`);
+        if (json.warning) alert(json.warning);
 
         currentStudioFields = json.discovered_fields || [];
         renderStudioFieldsTable();
@@ -1659,11 +1725,11 @@
           <td class="p-2.5 text-center">
             <input type="checkbox" id="chk_fld_${idx}" ${checked} onchange="toggleStudioField(${idx})" class="w-4 h-4 accent-blue-600 rounded cursor-pointer" />
           </td>
-          <td class="p-2.5 font-mono text-blue-300 font-semibold">${f.key}</td>
+          <td class="p-2.5 font-mono text-blue-300 font-semibold">${escapeHtml(f.key)}</td>
           <td class="p-2.5">
-            <input type="text" value="${f.label}" onchange="updateStudioFieldLabel(${idx}, this.value)" class="bg-[#090b12] border border-[#20273c] text-xs text-white px-2 py-1 rounded w-full font-sans focus:border-blue-500 focus:outline-none" />
+            <input type="text" value="${escapeHtml(f.label)}" onchange="updateStudioFieldLabel(${idx}, this.value)" class="bg-[#090b12] border border-[#20273c] text-xs text-white px-2 py-1 rounded w-full font-sans focus:border-blue-500 focus:outline-none" />
           </td>
-          <td class="p-2.5 text-slate-400 font-mono text-[11px] truncate max-w-[200px]">${f.sample_value || '—'}</td>
+          <td class="p-2.5 text-slate-400 font-mono text-[11px] truncate max-w-[200px]">${escapeHtml(f.sample_value ?? '—')}</td>
           <td class="p-2.5 text-center">
             <span class="bg-[#181d2c] text-slate-300 text-[10px] px-2 py-0.5 rounded border border-[#20273c] uppercase">${f.data_type}</span>
           </td>
@@ -1721,77 +1787,87 @@
         return;
       }
 
-      const payload = {
-        name: name,
-        description: desc,
-        fields: activeFields
-      };
+      // Strip UI-only keys; the server validates against CustomTemplate.
+      const fields = activeFields.map(({ selected, ...f }) => f);
+      const payload = { name: name, description: desc, fields: fields };
 
       try {
-        const res = await fetch("/api/templates/save", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
+        // Editing an existing template -> update in place (PUT); otherwise create.
+        const res = currentTemplateId
+          ? await fetch(`/api/templates/${encodeURIComponent(currentTemplateId)}`, {
+              method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload)
+            })
+          : await fetch("/api/templates/save", {
+              method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload)
+            });
         const json = await res.json();
+        if (!res.ok) throw new Error(json.detail ? JSON.stringify(json.detail) : `HTTP ${res.status}`);
 
-        // Save in localStorage as well
-        const localTemplates = JSON.parse(localStorage.getItem("esmagico_custom_templates") || "[]");
-        localTemplates.push(json.template);
-        localStorage.setItem("esmagico_custom_templates", JSON.stringify(localTemplates));
+        const created = !currentTemplateId;
+        currentTemplateId = json.template.id;
+        await loadSavedTemplates(currentTemplateId);
 
         const notice = document.getElementById("studioSaveNotice");
-        notice.textContent = `✓ Template "${name}" saved to browser & system!`;
+        notice.textContent = `✓ Template "${json.template.name}" ${created ? "created" : "updated"}`;
         setTimeout(() => notice.textContent = "", 4000);
-
-        await loadSavedTemplates();
       } catch (e) {
         alert("Save failed: " + e.message);
       }
     }
 
-    async function loadSavedTemplates() {
+    // Templates live only on the server (templates/*.json) - no browser copy that can drift.
+    let currentTemplateId = null;
+
+    async function loadSavedTemplates(selectId = null) {
       const select = document.getElementById("studioTemplateSelect");
       select.innerHTML = `<option value="">-- Choose Template --</option>`;
 
       try {
         const res = await fetch("/api/templates/list");
         const json = await res.json();
-        const serverTemplates = json.templates || [];
-
-        const localTemplates = JSON.parse(localStorage.getItem("esmagico_custom_templates") || "[]");
-        const allTemplates = [...serverTemplates, ...localTemplates];
-
-        const seen = new Set();
-        allTemplates.forEach(t => {
-          if (!seen.has(t.id)) {
-            seen.add(t.id);
-            const opt = document.createElement("option");
-            opt.value = t.id;
-            opt.textContent = `${t.name} (${t.fields ? t.fields.length : 0} fields)`;
-            select.appendChild(opt);
-          }
+        (json.templates || []).forEach(t => {
+          const opt = document.createElement("option");
+          opt.value = t.id;
+          opt.textContent = `${t.name} (${t.fields ? t.fields.length : 0} fields)`;
+          select.appendChild(opt);
         });
+        if (selectId) select.value = selectId;
       } catch (e) {
         console.error("Failed to load templates:", e);
       }
+      try { localStorage.removeItem("esmagico_custom_templates"); } catch (e) { /* legacy cleanup */ }
     }
 
-    function onTemplateSelectChange() {
+    async function onTemplateSelectChange() {
       const id = document.getElementById("studioTemplateSelect").value;
-      if (!id) return;
+      if (!id) { createNewTemplateDraft(); return; }
 
-      const localTemplates = JSON.parse(localStorage.getItem("esmagico_custom_templates") || "[]");
-      const found = localTemplates.find(t => t.id === id);
-      if (found) {
-        document.getElementById("inputTemplateName").value = found.name;
-        document.getElementById("inputTemplateDesc").value = found.description || "";
-        currentStudioFields = found.fields.map(f => ({ ...f, selected: true }));
+      try {
+        const res = await fetch(`/api/templates/${encodeURIComponent(id)}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const t = await res.json();
+        currentTemplateId = t.id;
+        document.getElementById("inputTemplateName").value = t.name;
+        document.getElementById("inputTemplateDesc").value = t.description || "";
+        currentStudioFields = (t.fields || []).map(f => ({ ...f, selected: true }));
         renderStudioFieldsTable();
+      } catch (e) {
+        alert("Could not load template: " + e.message);
       }
     }
 
+    async function deleteSelectedTemplate() {
+      const id = document.getElementById("studioTemplateSelect").value;
+      if (!id) { alert("Choose a template to delete."); return; }
+      if (!confirm("Delete this template permanently?")) return;
+      const res = await fetch(`/api/templates/${encodeURIComponent(id)}`, { method: "DELETE" });
+      if (!res.ok) { alert(`Delete failed (HTTP ${res.status})`); return; }
+      createNewTemplateDraft();
+      await loadSavedTemplates();
+    }
+
     function createNewTemplateDraft() {
+      currentTemplateId = null;
       document.getElementById("inputTemplateName").value = "";
       document.getElementById("inputTemplateDesc").value = "";
       currentStudioFields = [];
@@ -1826,11 +1902,21 @@
       try {
         const res = await fetch("/api/templates/extract", { method: "POST", body: formData });
         const json = await res.json();
+        if (!res.ok) throw new Error(json.detail || `HTTP ${res.status}`);
         lastCustomExtractedData = json.data;
 
         const container = document.getElementById("studioCustomOutputContainer");
         container.classList.remove("hidden");
-        document.getElementById("studioCustomOutputCode").textContent = JSON.stringify(json.data, null, 2);
+        const meta = {
+          method: json.method,
+          missing_fields: json.missing_fields,
+          needs_review: json.needs_review,
+          review_reasons: json.review_reasons,
+          warning: json.warning,
+          cost: json.cost,
+        };
+        document.getElementById("studioCustomOutputCode").textContent =
+          JSON.stringify(json.data, null, 2) + "\n\n// --- extraction info ---\n" + JSON.stringify(meta, null, 2);
       } catch (e) {
         alert("Extraction failed: " + e.message);
       } finally {
@@ -1857,10 +1943,55 @@
       if (btn) btn.innerHTML = `<i data-lucide="loader" class="w-3.5 h-3.5 animate-spin"></i><span>Benchmarking...</span>`;
 
       try {
-        const res = await fetch("/api/eval");
-        const json = await res.json();
+        const mode = document.getElementById("headerModeSelect").value;
+        const start = await fetch(`/api/eval/jobs?mode=${encodeURIComponent(mode)}`, { method: "POST" });
+        const sj = await start.json();
+        if (!start.ok) throw new Error(sj.detail || `HTTP ${start.status}`);
 
+        let job;
+        while (true) {
+          await new Promise(r => setTimeout(r, 2000));
+          job = await (await fetch(`/api/batch/jobs/${sj.job_id}`)).json();
+          if (btn) btn.innerHTML = `<i data-lucide="loader" class="w-3.5 h-3.5 animate-spin"></i><span>Benchmarking... ${job.elapsed_s}s</span>`;
+          if (job.status === "completed" || job.status === "failed") break;
+        }
+        if (job.status === "failed") throw new Error(job.error);
+        renderBenchmark(job.result);
+      } catch (e) {
+        alert("Benchmark error: " + e.message);
+      } finally {
+        if (btn) btn.innerHTML = `<i data-lucide="activity" class="w-3.5 h-3.5"></i><span>Run 10-Document Benchmark</span>`;
+        lucide.createIcons();
+      }
+    }
+
+    async function loadLatestBenchmark() {
+      try {
+        const res = await fetch("/api/eval/latest");
+        const json = await res.json();
+        if (json.available) renderBenchmark(json.result);
+      } catch (e) {
+        console.error("Could not load last eval:", e);
+      }
+    }
+
+    function renderBenchmark(json) {
+      {
+        const totalFields = Object.values(json.field_correct_counts || {}).reduce((a, b) => a + b, 0);
+        const pct = v => (v === null || v === undefined) ? "n/a" : `${(v * 100).toFixed(1)}%`;
         document.getElementById("benchOverallAcc").textContent = `${json.overall_accuracy}%`;
+        document.getElementById("benchOverallSub").textContent =
+          `${totalFields} / ${json.total_docs * 8} fields - ${json.mode}`;
+        document.getElementById("benchDocsCorrect").textContent = `${json.docs_fully_correct} / ${json.total_docs}`;
+        document.getElementById("benchRowsSub").textContent =
+          `Line-item rows: P ${pct(json.line_item_row_precision)} / R ${pct(json.line_item_row_recall)}`;
+        document.getElementById("benchCost").textContent = `$${Number(json.avg_cost_per_doc || 0).toFixed(5)}`;
+        document.getElementById("benchCostSub").textContent =
+          `${json.total_tokens_in} in / ${json.total_tokens_out} out tokens (${json.total_docs} docs)`;
+        const rv = json.review || {};
+        document.getElementById("benchReview").textContent = pct(rv.recall);
+        document.getElementById("benchReviewSub").textContent =
+          `${rv.flagged_docs ?? 0} flagged, ${rv.docs_with_errors ?? 0} docs with errors`;
 
         if (analyticsChartInstance && json.field_accuracy) {
           const keys = ['is_invoice', 'vendor', 'invoice_number', 'invoice_date', 'currency', 'line_items', 'tax_total', 'total'];
@@ -1888,12 +2019,6 @@
           </tr>`;
         });
         matrixBody.innerHTML = html;
-
-      } catch (e) {
-        console.error("Benchmark error:", e);
-      } finally {
-        if (btn) btn.innerHTML = `<i data-lucide="activity" class="w-3.5 h-3.5"></i><span>Run 10-Document Benchmark</span>`;
-        lucide.createIcons();
       }
     }
 
@@ -1905,7 +2030,7 @@
           labels: ['is_invoice', 'vendor', 'invoice_num', 'date', 'currency', 'line_items', 'tax_total', 'total'],
           datasets: [{
             label: 'Field Accuracy %',
-            data: [100, 90, 100, 100, 100, 70, 90, 100],
+            data: [0, 0, 0, 0, 0, 0, 0, 0],  // filled from /api/eval/latest or a new run
             backgroundColor: '#2563eb',
             borderRadius: 4
           }]

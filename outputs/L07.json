@@ -1,6 +1,6 @@
 {
   "is_invoice": true,
-  "vendor": "Pixel Harbor Studio",
+  "vendor": "PIXEL HARBOR STUDIO",
   "invoice_number": "PHS-1042",
   "invoice_date": "2026-03-14",
   "currency": "USD",
@@ -22,7 +22,7 @@
     },
     {
       "description": "Returning client discount (10%)",
-      "quantity": -450.0,
+      "quantity": null,
       "amount": -450.0
     }
   ],

@@ -7,7 +7,7 @@
   "line_items": [
     {
       "description": "Monthly compliance retainer (May 2026)",
-      "quantity": 45000.0,
+      "quantity": null,
       "amount": 45000.0
     },
     {
@@ -22,7 +22,7 @@
     },
     {
       "description": "Out-of-pocket expenses (reimbursable)",
-      "quantity": 1240.0,
+      "quantity": null,
       "amount": 1240.0
     }
   ],

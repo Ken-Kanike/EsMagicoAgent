@@ -88,3 +88,28 @@ def test_fractional_quantity_and_negative_discount():
     obj, issues = validator.validate(payload)
     assert len(issues) == 0
     assert obj.total == 11550.0
+
+
+def _inv(**kw):
+    d = {"is_invoice": True, "vendor": "Lakeside Printing Co", "invoice_number": "LP-10932",
+         "invoice_date": "2026-10-21", "due_date": "2026-11-20", "currency": "GBP",
+         "line_items": [{"description": "Delivery", "quantity": None, "amount": 100.0}],
+         "tax_total": 0.0, "total": 100.0}
+    d.update(kw)
+    return d
+
+
+def test_due_date_consistency():
+    v = InvoiceValidator()
+    assert v.check(_inv()).ok
+    # misread year on a scan: 2026 -> 2025
+    assert any("days before due_date" in e for e in v.check(_inv(invoice_date="2025-10-21")).errors)
+    # issue date after due date
+    assert any("AFTER due_date" in e for e in v.check(_inv(invoice_date="2026-12-01")).errors)
+    # helper field never reaches the output
+    assert "due_date" not in v.check(_inv()).obj.model_dump()
+
+
+def test_required_fields_flagged():
+    errs = InvoiceValidator().check(_inv(total=None)).errors
+    assert any("'total' is missing" in e for e in errs)

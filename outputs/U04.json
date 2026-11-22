@@ -7,7 +7,7 @@
   "line_items": [
     {
       "description": "Compute instances (instance-hours)",
-      "quantity": 0.09,
+      "quantity": 1440.0,
       "amount": 122.4
     },
     {

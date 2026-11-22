@@ -8,9 +8,20 @@ from pipeline.models import TokenUsage
 
 class NoAIBackend(AIBackend):
     """
-    Deterministic rule & layout parser using token streaming, layout heuristics,
-    and regular expressions. Operates 100% offline with zero AI API costs.
+    Deterministic rule & layout parser (baseline). Offline, zero cost.
+    NOTE: these heuristics were written while looking at the 10 labelled sample
+    documents, so its labelled-set score overstates how well it generalises.
     """
+
+    is_llm = False
+    mode = "no_ai"
+
+    def model_for(self, has_images: bool) -> str:
+        return "layout-parser-v2"
+
+    def extract_rules(self, text: str) -> dict:
+        raw, _ = self.extract(text, [])
+        return json.loads(raw)
 
     @property
     def name(self) -> str:
@@ -93,13 +104,13 @@ class NoAIBackend(AIBackend):
         lower = text.lower()
         non_invoice_cues = [
             "purchase order", "po no.", "po no ", "po-", "po date", "po total",
-            "bank statement", "account statement", "harbor trust bank",
+            "bank statement", "account statement", "statement of account",
             "cover letter", "hiring manager", "dear hiring", "curriculum vitae", "resume",
             "bill of lading", "packing slip", "delivery challan"
         ]
         for cue in non_invoice_cues:
             if cue in lower:
-                if any(strong in lower for strong in ["purchase order", "account statement", "hiring manager", "cover letter"]):
+                if any(strong in lower for strong in ["purchase order", "account statement", "bank statement", "statement of account", "hiring manager", "cover letter"]):
                     return False
 
         invoice_cues = [

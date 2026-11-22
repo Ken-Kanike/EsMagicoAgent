@@ -25,4 +25,4 @@ python scripts/eval.py [--mode no_ai|groq|local|gemini|openai]
 ## Generated Artifacts
 - Terminal Rich table display.
 - Markdown summary at `reports/accuracy_table.md`.
-- Token and USD cost analysis at `reports/cost_report.md`.
+- Token and USD cost analysis in the "Cost" section of `reports/accuracy_table.md`.

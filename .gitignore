@@ -33,3 +33,12 @@ logs/
 # Temporary upload staging
 temp_upload/
 
+
+# User-created templates (may contain personal sample values); keep only .gitkeep
+templates/*.json
+
+# Extraction cache
+.cache/
+
+# Results produced from the dashboard UI (deliverables are outputs/*.json)
+outputs/dashboard/

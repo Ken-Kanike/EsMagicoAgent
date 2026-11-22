@@ -22,10 +22,10 @@
     },
     {
       "description": "Service charge (10%)",
-      "quantity": 8580.0,
+      "quantity": null,
       "amount": 8580.0
     }
   ],
-  "tax_total": 0.0,
+  "tax_total": 4719.0,
   "total": 99099.0
 }

@@ -2,7 +2,7 @@
   "is_invoice": true,
   "vendor": "Blue Lotus Hospitality",
   "invoice_number": "BL/GA/26/5528",
-  "invoice_date": null,
+  "invoice_date": "2026-11-10",
   "currency": "INR",
   "line_items": [
     {
@@ -21,6 +21,6 @@
       "amount": 650.0
     }
   ],
-  "tax_total": 0.0,
+  "tax_total": 2980.5,
   "total": 30660.5
 }
