@@ -7,7 +7,7 @@
   <meta name="description" content="Upload invoices, review validated JSON, run batches and templates, evaluate accuracy and cost.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com/3.4.16"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
@@ -16,33 +16,26 @@
 </head>
 <body>
 <div class="app">
-  <!-- ============================== SIDEBAR ============================== -->
+  <!-- ============================== ICON RAIL ============================== -->
   <aside class="sidebar">
-    <div class="brand">
-      <div class="brand-mark"><i data-lucide="file-scan" style="width:17px;height:17px"></i></div>
-      <div>
-        <div class="brand-title">Invoice Pipeline</div>
-        <div class="brand-sub">Extraction · Validation · Eval</div>
-      </div>
+    <div class="brand" title="Invoice Pipeline">
+      <div class="brand-mark"><i data-lucide="scan-text"></i></div>
     </div>
     <nav class="nav">
-      <div class="nav-group">Operate</div>
-      <button class="nav-item" data-page="overview"><i data-lucide="layout-dashboard"></i>Overview<span class="count hidden" id="navReviewCount"></span></button>
-      <button class="nav-item" data-page="workspace"><i data-lucide="file-search"></i>Workspace</button>
-      <button class="nav-item" data-page="batch"><i data-lucide="layers"></i>Batch processing</button>
-      <div class="nav-group">Build</div>
-      <button class="nav-item" data-page="templates"><i data-lucide="scan-line"></i>Template studio</button>
-      <div class="nav-group">Measure</div>
-      <button class="nav-item" data-page="evaluation"><i data-lucide="bar-chart-3"></i>Evaluation</button>
-      <div class="nav-group">Integrate</div>
-      <button class="nav-item" data-page="mcp"><i data-lucide="plug"></i>MCP &amp; agents</button>
-      <button class="nav-item" data-page="settings"><i data-lucide="settings-2"></i>Settings</button>
+      <div class="nav-group"></div>
+      <button class="nav-item" data-page="overview"><i data-lucide="layout-grid"></i><span class="nav-label">Overview</span><span class="count hidden" id="navReviewCount"></span></button>
+      <button class="nav-item" data-page="workspace"><i data-lucide="file-search"></i><span class="nav-label">Workspace</span></button>
+      <button class="nav-item" data-page="batch"><i data-lucide="layers"></i><span class="nav-label">Batch processing</span></button>
+      <div class="nav-group"></div>
+      <button class="nav-item" data-page="templates"><i data-lucide="scan-line"></i><span class="nav-label">Template studio</span></button>
+      <button class="nav-item" data-page="evaluation"><i data-lucide="chart-no-axes-combined"></i><span class="nav-label">Evaluation</span></button>
+      <div class="nav-group"></div>
+      <button class="nav-item" data-page="mcp"><i data-lucide="plug"></i><span class="nav-label">MCP &amp; agents</span></button>
+      <button class="nav-item" data-page="settings"><i data-lucide="settings-2"></i><span class="nav-label">Settings</span></button>
     </nav>
     <div class="sidebar-foot">
-      <div id="footHealth"><span class="dot"></span> Connecting…</div>
-      <div id="footEngine" class="flex items-center gap-1.5"></div>
-      <div id="footPii"></div>
-      <a href="/docs" target="_blank" class="flex items-center gap-1.5"><i data-lucide="book-open" style="width:13px;height:13px"></i>REST API docs</a>
+      <a class="rail-btn" href="/docs" target="_blank"><i data-lucide="book-open"></i><span class="nav-label">REST API docs</span></a>
+      <div class="rail-btn" id="footStatus"><span class="status-orb" id="statusOrb"></span><span class="nav-label" id="footStatusLabel">Connecting…</span></div>
     </div>
   </aside>
 
@@ -53,18 +46,22 @@
         <div class="page-title" id="pageTitle">Overview</div>
         <div class="page-sub" id="pageSub"></div>
       </div>
-      <div class="flex items-center gap-2">
-        <label class="flex items-center gap-2 card" style="padding:4px 4px 4px 10px">
-          <span class="muted" style="font-size:11.5px">Engine</span>
-          <select id="modeSelect" class="select" style="width:auto;border:0;background:transparent;padding:4px 6px" title="Backend used by actions on this page">
-            <option value="groq">Groq · qwen3.8 vision + gpt-oss</option>
-            <option value="openai">OpenAI-compatible</option>
-            <option value="gemini">Gemini</option>
-            <option value="local">Local LLM</option>
-            <option value="no_ai">Rule baseline (no LLM)</option>
-          </select>
-        </label>
-        <a class="btn" href="/api/export/excel"><i data-lucide="file-spreadsheet"></i>Export outputs</a>
+      <div class="top-actions">
+        <div class="search">
+          <i data-lucide="search"></i>
+          <input id="docSearch" class="input" placeholder="Search documents, vendors, invoice #" autocomplete="off">
+          <span class="kbd">Ctrl K</span>
+          <div class="search-pop" id="searchPop"></div>
+        </div>
+        <select id="modeSelect" class="select" style="width:auto" title="Engine used by actions in this session">
+          <option value="groq">Groq · vision + text</option>
+          <option value="openai">OpenAI-compatible</option>
+          <option value="gemini">Gemini</option>
+          <option value="local">Local LLM</option>
+          <option value="no_ai">Rule baseline</option>
+        </select>
+        <a class="btn btn-icon" href="/api/export/excel" title="Export all outputs to Excel"><i data-lucide="download"></i></a>
+        <button class="btn btn-icon btn-primary" title="New batch" onclick="navigate('batch')"><i data-lucide="plus"></i></button>
       </div>
     </header>
 
@@ -72,37 +69,76 @@
 
       <!-- ============================== OVERVIEW ============================== -->
       <section class="page" id="page-overview">
-        <div class="grid gap-4" style="grid-template-columns:repeat(auto-fit,minmax(190px,1fr))" id="ovKpis"></div>
+        <div class="greet">
+          <div>
+            <h1 id="ovGreeting">Welcome back</h1>
+            <div class="date" id="ovDate"></div>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <button class="btn" onclick="navigate('workspace')"><i data-lucide="upload"></i>Extract a document</button>
+            <button class="btn" onclick="navigate('evaluation')"><i data-lucide="chart-no-axes-combined"></i>Evaluation</button>
+          </div>
+        </div>
 
-        <div class="card">
-          <div class="card-head"><div class="card-title">Pipeline</div>
-            <span class="card-sub">Each document ends as validated JSON, or with needs_review and the reasons</span></div>
-          <div class="card-pad">
-            <div class="flow">
-              <div class="flow-step"><div class="t"><span class="n">01</span>Load</div><div class="d">PDF or image. Empty, corrupt, encrypted or unsupported files get a typed error and never reach a model.</div></div>
-              <div class="flow-step"><div class="t"><span class="n">02</span>Route</div><div class="d">Text layer goes to the text model. Scans are straightened, rendered at 200 dpi and sent to the vision model.</div></div>
-              <div class="flow-step"><div class="t"><span class="n">03</span>Extract</div><div class="d">JSON mode, temperature 0, with the sample pack's labelling rules in the prompt.</div></div>
-              <div class="flow-step"><div class="t"><span class="n">04</span>Validate</div><div class="d">Schema, required fields, items + tax = total, qty × unit price, issue vs due date.</div></div>
-              <div class="flow-step"><div class="t"><span class="n">05</span>Retry</div><div class="d">Up to two corrective turns that quote the failed checks. The best attempt is kept.</div></div>
-              <div class="flow-step"><div class="t"><span class="n">06</span>Flag</div><div class="d">Anything still failing is returned with <span class="mono">needs_review</span> and its reasons.</div></div>
+        <div class="grid gap-[18px]" style="grid-template-columns:minmax(0,1fr) 340px">
+          <!-- main glowing panel -->
+          <div class="hero grid gap-[18px] content-start">
+            <div class="beam" aria-hidden="true"></div>
+            <div class="grid gap-[14px]" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))" id="ovKpis"></div>
+            <div class="grid gap-[14px]" style="grid-template-columns:minmax(0,1.7fr) minmax(0,1fr)">
+              <div class="card">
+                <div class="card-head">
+                  <div class="card-title"><i data-lucide="activity"></i>Tokens per document</div>
+                  <div class="flex items-center gap-3 card-sub">
+                    <span class="flex items-center gap-1.5"><i style="width:8px;height:8px;border-radius:50%;background:#9b7bff;display:inline-block"></i>Input</span>
+                    <span class="flex items-center gap-1.5"><i style="width:8px;height:8px;border-radius:50%;background:#ffb547;display:inline-block"></i>Output</span>
+                  </div>
+                </div>
+                <div class="card-pad"><div style="height:250px"><canvas id="ovLine"></canvas></div></div>
+              </div>
+              <div class="card">
+                <div class="card-head"><div class="card-title"><i data-lucide="gauge"></i>Labelled accuracy</div><span class="card-sub" id="ovGaugeSub"></span></div>
+                <div class="card-pad" id="ovGauge"></div>
+              </div>
+            </div>
+            <div class="grid gap-[14px]" style="grid-template-columns:minmax(0,1fr) minmax(0,1fr)">
+              <div class="card">
+                <div class="card-head"><div class="card-title"><i data-lucide="bar-chart-3"></i>Field accuracy</div>
+                  <button class="btn btn-sm btn-ghost" onclick="navigate('evaluation')">Details<i data-lucide="arrow-up-right"></i></button></div>
+                <div class="card-pad"><div style="height:220px"><canvas id="ovChart"></canvas></div></div>
+              </div>
+              <div class="card">
+                <div class="card-head"><div class="card-title"><i data-lucide="coins"></i>Cost per document (USD)</div><span class="card-sub" id="ovCostSub"></span></div>
+                <div class="card-pad"><div style="height:220px"><canvas id="ovCost"></canvas></div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- right column -->
+          <div class="grid gap-[18px] content-start">
+            <div class="card">
+              <div class="card-head"><div class="card-title"><i data-lucide="inbox"></i>Needs review</div><span class="badge badge-warn" id="ovQueueCount">0</span></div>
+              <div class="card-pad timeline" id="ovQueue"></div>
+            </div>
+            <div class="card">
+              <div class="card-head"><div class="card-title"><i data-lucide="history"></i>Recent runs</div></div>
+              <div class="card-pad timeline" id="ovRuns"></div>
+            </div>
+            <div class="card">
+              <div class="card-head"><div class="card-title"><i data-lucide="workflow"></i>Pipeline</div></div>
+              <div class="card-pad flow">
+                <div class="flow-step"><span class="n">01</span><div><div class="t">Load</div><div class="d">PDF or image. Corrupt or unsupported files get a typed error and never reach a model.</div></div></div>
+                <div class="flow-step"><span class="n">02</span><div><div class="t">Route</div><div class="d">Text layer → text model. Scans → upright, 200 dpi → vision model.</div></div></div>
+                <div class="flow-step"><span class="n">03</span><div><div class="t">Extract</div><div class="d">JSON mode, temperature 0, labelling rules in the prompt.</div></div></div>
+                <div class="flow-step"><span class="n">04</span><div><div class="t">Validate</div><div class="d">Schema, required fields, items + tax = total, qty × price, due date.</div></div></div>
+                <div class="flow-step"><span class="n">05</span><div><div class="t">Retry &amp; flag</div><div class="d">Up to 2 corrective turns; anything still failing gets <span class="mono">needs_review</span>.</div></div></div>
+              </div>
             </div>
           </div>
         </div>
 
-        <div class="grid gap-4" style="grid-template-columns:minmax(0,3fr) minmax(0,2fr)">
-          <div class="card">
-            <div class="card-head"><div class="card-title"><i data-lucide="inbox"></i>Review queue</div><span class="card-sub" id="ovQueueSub"></span></div>
-            <div id="ovQueue"></div>
-          </div>
-          <div class="card">
-            <div class="card-head"><div class="card-title"><i data-lucide="bar-chart-3"></i>Field accuracy (labelled set)</div>
-              <button class="btn btn-sm btn-ghost" onclick="navigate('evaluation')">Details<i data-lucide="arrow-right"></i></button></div>
-            <div class="card-pad"><div style="height:230px"><canvas id="ovChart"></canvas></div></div>
-          </div>
-        </div>
-
         <div class="card">
-          <div class="card-head"><div class="card-title"><i data-lucide="folder-output"></i>Deliverable outputs <span class="mono muted" style="font-weight:400">outputs/*.json</span></div>
+          <div class="card-head"><div class="card-title"><i data-lucide="folder-output"></i>Deliverable outputs <span class="mono muted" style="font-weight:400;font-size:12px">outputs/*.json</span></div>
             <div class="flex gap-2"><a class="btn btn-sm" href="/api/export/zip"><i data-lucide="file-archive"></i>JSON .zip</a><a class="btn btn-sm" href="/api/export/excel"><i data-lucide="file-spreadsheet"></i>Excel</a></div></div>
           <div class="table-wrap" style="max-height:520px">
             <table class="table"><thead><tr><th>Doc</th><th>Type</th><th>Vendor</th><th>Invoice #</th><th>Date</th><th class="num">Items</th><th class="num">Total</th><th class="center">Σ check</th></tr></thead>

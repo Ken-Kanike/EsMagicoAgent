@@ -299,26 +299,159 @@ async function navigate(name, opts = {}) {
 function currentMode() { return $("#modeSelect").value; }
 
 async function loadEngineStatus() {
+  const orb = $("#statusOrb"), label = $("#footStatusLabel");
   try {
     const [h, k] = await Promise.all([api("/health"), api("/api/settings/keys")]);
     App.state.health = h; App.state.keys = k;
     const sel = $("#modeSelect");
     if (!App.state.mode && h.active_mode && [...sel.options].some(o => o.value === h.active_mode)) sel.value = h.active_mode;
     App.state.mode = sel.value;
-    $("#footHealth").innerHTML = `<span class="dot ok"></span> API online`;
+    orb.className = "status-orb ok";
     const llm = sel.value === "groq" ? `${k.groq.keys_count} Groq key(s)` : sel.value;
-    $("#footEngine").innerHTML = `<i data-lucide="cpu" style="width:13px;height:13px"></i> ${esc(llm)}`;
-    $("#footPii").innerHTML = `<span class="dot ${k.pii_shield_enabled ? "ok" : ""}"></span> PII shield ${k.pii_shield_enabled ? "on" : "off"}`;
+    label.textContent = `API online · ${llm} · PII shield ${k.pii_shield_enabled ? "on" : "off"}`;
   } catch (e) {
-    $("#footHealth").innerHTML = `<span class="dot err"></span> API unreachable`;
+    orb.className = "status-orb err";
+    label.textContent = "API unreachable";
   }
   icons();
+}
+
+// ------------------------------------------------------------------ visual helpers
+/** Animate the number inside el from 0 to its final text (keeps prefixes/suffixes like $ and %). */
+function countUp(el, duration = 1100) {
+  if (!el || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const final = el.textContent;
+  const m = final.match(/-?[\d,]*\.?\d+/);
+  if (!m) return;
+  const target = parseFloat(m[0].replace(/,/g, ""));
+  const decimals = (m[0].split(".")[1] || "").length;
+  const useComma = m[0].includes(",");
+  const t0 = performance.now();
+  const step = now => {
+    const p = Math.min(1, (now - t0) / duration);
+    const v = target * (1 - Math.pow(1 - p, 3));
+    let txt = v.toFixed(decimals);
+    if (useComma) txt = Number(txt).toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+    el.textContent = final.replace(m[0], txt);
+    if (p < 1) requestAnimationFrame(step); else el.textContent = final;
+  };
+  requestAnimationFrame(step);
+}
+
+/** Smooth SVG sparkline with a gradient area. */
+function sparkline(values, color = "#5ee08f") {
+  const vals = (values || []).map(Number).filter(v => !Number.isNaN(v));
+  if (vals.length < 2) return `<svg class="spark" viewBox="0 0 200 46"></svg>`;
+  const w = 200, h = 46, pad = 4;
+  const min = Math.min(...vals), max = Math.max(...vals);
+  const span = max - min || 1;
+  const pts = vals.map((v, i) => [pad + i * (w - 2 * pad) / (vals.length - 1),
+    h - pad - (max === min ? (h - 2 * pad) / 2 : (v - min) / span * (h - 2 * pad))]);
+  let d = `M${pts[0][0]},${pts[0][1]}`;
+  for (let i = 1; i < pts.length; i++) {
+    const [x0, y0] = pts[i - 1], [x1, y1] = pts[i];
+    const cx = (x0 + x1) / 2;
+    d += ` C${cx},${y0} ${cx},${y1} ${x1},${y1}`;
+  }
+  const id = "g" + Math.random().toString(36).slice(2, 8);
+  const last = pts[pts.length - 1];
+  return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+    <defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${color}" stop-opacity=".28"/><stop offset="1" stop-color="${color}" stop-opacity="0"/></linearGradient></defs>
+    <path class="area" d="${d} L${last[0]},${h} L${pts[0][0]},${h} Z" fill="url(#${id})"/>
+    <path class="line" d="${d}" stroke="${color}" style="filter:drop-shadow(0 0 6px ${color}66)"/>
+    <circle cx="${last[0]}" cy="${last[1]}" r="3" fill="${color}" style="filter:drop-shadow(0 0 6px ${color})"/></svg>`;
+}
+
+/** Radial gauge (240 degree arc) with tick marks; value 0-100. Call animateGauges() after inserting. */
+function gaugeHtml(value, sub, legend) {
+  const r = 92, cx = 120, cy = 118, sweep = 240, start = 150;
+  const rad = a => (a * Math.PI) / 180;
+  const pt = (a, rr = r) => [cx + rr * Math.cos(rad(a)), cy + rr * Math.sin(rad(a))];
+  const [sx, sy] = pt(start), [ex, ey] = pt(start + sweep);
+  const arcPath = `M${sx},${sy} A${r},${r} 0 1 1 ${ex},${ey}`;
+  const len = (Math.PI * 2 * r * sweep) / 360;
+  let ticks = "";
+  for (let i = 0; i <= 40; i++) {
+    const a = start + (sweep * i) / 40;
+    const [x1, y1] = pt(a, r + 14), [x2, y2] = pt(a, r + (i % 5 === 0 ? 22 : 18));
+    ticks += `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}"/>`;
+  }
+  const id = "ga" + Math.random().toString(36).slice(2, 7);
+  const clamped = Math.max(0, Math.min(100, Number(value) || 0));
+  return `<div class="gauge-wrap">
+    <svg class="gauge" viewBox="0 0 240 200">
+      <defs><linearGradient id="${id}" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#ff9a1f"/><stop offset=".55" stop-color="#ffd48a"/><stop offset="1" stop-color="#9b7bff"/></linearGradient></defs>
+      <g class="ticks">${ticks}</g>
+      <path class="track" d="${arcPath}" fill="none" stroke-width="14" stroke-linecap="round"/>
+      <path class="arc" d="${arcPath}" fill="none" stroke="url(#${id})" stroke-width="14" stroke-linecap="round"
+        stroke-dasharray="${len.toFixed(1)}" stroke-dashoffset="${len.toFixed(1)}" data-target="${(len * (1 - clamped / 100)).toFixed(1)}"/>
+    </svg>
+    <div class="gauge-center"><div class="v" data-count>${esc(value)}%</div><div class="s">${esc(sub || "")}</div></div>
+  </div>
+  ${legend ? `<div class="gauge-legend">${legend.map(l => `<div><div class="k"><i style="background:${l.color}"></i>${esc(l.label)}</div><div class="n">${esc(l.value)}</div></div>`).join("")}</div>` : ""}`;
+}
+function animateGauges(root = document) {
+  requestAnimationFrame(() => setTimeout(() => {
+    $$(".gauge .arc", root).forEach(a => a.setAttribute("stroke-dashoffset", a.dataset.target));
+    $$(".gauge-center [data-count]", root).forEach(el => countUp(el, 1500));
+  }, 60));
+}
+
+// ------------------------------------------------------------------ document search (Ctrl+K)
+const Search = { items: null, sel: 0 };
+async function searchIndex() {
+  if (Search.items) return Search.items;
+  try {
+    const o = await api("/api/overview");
+    Search.items = o.outputs.map(x => ({
+      id: x.doc_id.toUpperCase(),
+      vendor: x.vendor || (x.is_invoice === false ? "Not an invoice" : "—"),
+      num: x.invoice_number || "",
+      total: x.is_invoice ? fmtMoney(x.total, x.currency) : "",
+    }));
+  } catch { Search.items = []; }
+  return Search.items;
+}
+async function renderSearch() {
+  const q = $("#docSearch").value.trim().toLowerCase();
+  const items = (await searchIndex()).filter(x => !q || `${x.id} ${x.vendor} ${x.num}`.toLowerCase().includes(q)).slice(0, 12);
+  Search.sel = Math.min(Search.sel, Math.max(0, items.length - 1));
+  const pop = $("#searchPop");
+  pop.innerHTML = items.length ? items.map((x, i) => `<div class="search-item ${i === Search.sel ? "sel" : ""}" data-id="${esc(x.id)}">
+      <span class="id">${esc(x.id)}</span><div class="min-w-0 flex-1"><div class="truncate-1" style="font-weight:600">${esc(x.vendor)}</div>
+      <div class="hint mono truncate-1">${esc(x.num)}</div></div><span class="hint mono">${x.total}</span></div>`).join("")
+    : `<div class="empty" style="padding:18px">No matching document</div>`;
+  pop.classList.add("open");
+  $$(".search-item", pop).forEach(el => el.onmousedown = e => { e.preventDefault(); openSearchResult(el.dataset.id); });
+}
+function openSearchResult(id) {
+  $("#searchPop").classList.remove("open");
+  $("#docSearch").value = "";
+  $("#docSearch").blur();
+  navigate("workspace", { docId: id });
+}
+function initSearch() {
+  const input = $("#docSearch");
+  input.addEventListener("focus", () => { Search.sel = 0; renderSearch(); });
+  input.addEventListener("input", () => { Search.sel = 0; renderSearch(); });
+  input.addEventListener("blur", () => setTimeout(() => $("#searchPop").classList.remove("open"), 120));
+  input.addEventListener("keydown", e => {
+    const n = $$("#searchPop .search-item").length;
+    if (e.key === "ArrowDown") { Search.sel = Math.min(n - 1, Search.sel + 1); renderSearch(); e.preventDefault(); }
+    if (e.key === "ArrowUp") { Search.sel = Math.max(0, Search.sel - 1); renderSearch(); e.preventDefault(); }
+    if (e.key === "Enter") { const el = $$("#searchPop .search-item")[Search.sel]; if (el) openSearchResult(el.dataset.id); }
+    if (e.key === "Escape") input.blur();
+  });
+  document.addEventListener("keydown", e => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") { e.preventDefault(); input.focus(); }
+  });
 }
 
 window.addEventListener("DOMContentLoaded", async () => {
   $$(".nav-item").forEach(b => b.addEventListener("click", () => navigate(b.dataset.page)));
   $("#modeSelect").addEventListener("change", () => { App.state.mode = currentMode(); toast(`Engine for this session: ${$("#modeSelect").selectedOptions[0].text}`); loadEngineStatus(); });
   $("#drawerClose").addEventListener("click", closePreview);
+  initSearch();
   await loadEngineStatus();
   icons();
   navigate((location.hash || "#overview").slice(1));

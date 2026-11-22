@@ -181,7 +181,7 @@ It writes [reports/accuracy_table.md](reports/accuracy_table.md) and `reports/ev
 
 ## 7. Dashboard
 
-`python scripts/serve_dashboard.py` → http://localhost:8000. Plain HTML/JS modules ([dashboard/static/](dashboard/static/)) on top of the same REST API, with no build step.
+`python scripts/serve_dashboard.py` → http://localhost:8000. Plain HTML/JS modules ([dashboard/static/](dashboard/static/)) on top of the same REST API, with no build step. Press <kbd>Ctrl</kbd>+<kbd>K</kbd> to jump to any document by id, vendor or invoice number. Animations follow the OS "reduce motion" setting.
 
 | Page | What it does |
 |---|---|
