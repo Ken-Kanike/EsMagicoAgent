@@ -1,5 +1,7 @@
 # Invoice Extraction Pipeline
 
+**Live demo: [esmagicoagent.onrender.com](https://esmagicoagent.onrender.com/)**. It runs on Render's free tier, so the first load after 15 minutes idle takes about a minute to wake up. The login details are shared with the submission.
+
 ![Dashboard overview: labelled accuracy, cost per document, tokens per document, review queue](docs/dashboard.png)
 
 Reads a vendor invoice (clean PDF, phone scan or photo) and returns **validated JSON** in the assignment schema. It also handles documents that are not invoices, and corrupt files. It comes with a one-command evaluation, outputs for all 20 sample documents, a dashboard, and an MCP server so agents can use the pipeline as tools.
