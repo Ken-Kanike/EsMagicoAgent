@@ -378,15 +378,85 @@ a:hover { text-decoration: underline; }
   .search .input { width: 200px; }
 }
 @media (max-width: 860px) {
-  .app { grid-template-columns: 1fr; }
-  .sidebar { position: sticky; top: 0; height: auto; flex-direction: row; padding: 8px 12px; border-right: 0; border-bottom: 1px solid var(--line); overflow-x: auto; }
-  .nav { flex-direction: row; padding: 0; }
+  /* ---- shell ---- */
+  .app { grid-template-columns: minmax(0, 1fr); }
+  .sidebar { position: sticky; top: 0; height: auto; flex-direction: row; align-items: center; gap: 8px; padding: 8px 12px;
+    border-right: 0; border-bottom: 1px solid var(--line); overflow-x: auto; scrollbar-width: none; background: rgba(6, 6, 6, 0.9); }
+  .sidebar::-webkit-scrollbar { display: none; }
+  .brand { padding: 0; flex: none; }
+  .brand-mark { width: 36px; height: 36px; border-radius: 11px; }
+  .nav { flex-direction: row; padding: 0; gap: 4px; flex: none; }
+  .nav-item { width: 40px; height: 40px; flex: none; }
   .nav-group, .nav-label, .sidebar-foot { display: none; }
   .nav-item.active::before { display: none; }
   .beam { display: none; }
-  .content { padding: 12px 16px 40px; }
-  .topbar { padding: 12px 16px; flex-wrap: wrap; position: static; }
+  .main { min-width: 0; width: 100%; }
+  .topbar { padding: 12px 16px; flex-wrap: wrap; position: static; gap: 10px; }
+  .topbar > div:first-child { min-width: 0; flex: 1 1 100%; }
+  .top-actions { width: 100%; }
+  .top-actions .select { flex: 1; min-width: 0; }
   .search { display: none; }
-  .fields { grid-template-columns: 1fr; }
+  .content { padding: 12px 14px 40px; gap: 14px; max-width: 100%; grid-template-columns: minmax(0, 1fr); }
+  .page.active { gap: 14px; grid-template-columns: minmax(0, 1fr); }
+  .page.active > *, .hero > *, .card { min-width: 0; max-width: 100%; }
+
+  /* ---- every multi-column layout (set inline on desktop) stacks into one column ---- */
+  .grid[style*="grid-template-columns"] { grid-template-columns: minmax(0, 1fr) !important; }
+  /* KPI tiles: two per row */
+  #ovKpis, #bKpis, #evKpis, #mcpKpis { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 10px !important; }
+  .kpi { padding: 14px; }
+  .kpi-value { font-size: 22px; margin-top: 8px; }
+  .kpi-row { flex-wrap: wrap; gap: 6px; }
+  .kpi-foot { font-size: 11.5px; }
+  .spark { height: 36px; margin-top: 8px; }
+  #mcpKpis .kpi-value { font-size: 15px !important; word-break: break-word; }
+
+  /* ---- cards, hero, greeting ---- */
+  .hero { padding: 12px; border-radius: 20px; }
+  .card { border-radius: 16px; }
+  .card-pad { padding: 14px; }
+  .card-head { padding: 12px 14px; flex-wrap: wrap; min-height: 0; }
+  .greet { flex-direction: column; align-items: stretch; gap: 12px; }
   .greet h1 { font-size: 26px; }
+  .greet .flex { width: 100%; }
+  .greet .btn { flex: 1; }
+
+  /* ---- toolbars & forms wrap instead of overflowing ---- */
+  .card-pad.flex, .card-pad .flex, .card-head .flex { flex-wrap: wrap; }
+  .select[style*="width:280px"], .input[style*="max-width"], .select[style*="max-width"] { width: 100% !important; max-width: none !important; }
+  .card-pad.flex > .flex { width: 100%; }
+  .card-pad.flex > .flex > .btn, .card-pad.flex > .flex > label.btn { flex: 1 1 auto; }
+  .card-pad.flex > .hint { width: 100%; }
+  .segmented { max-width: 100%; overflow-x: auto; }
+  .dropzone { padding: 22px 14px; }
+
+  /* ---- tables scroll sideways inside their card ---- */
+  .table-wrap { -webkit-overflow-scrolling: touch; }
+  .table-wrap > .table { min-width: 600px; }
+  /* small tables fit the screen and must not scroll */
+  #evReview .table, #evCost .table, #wsFields .table, #wsItems .table, #wsCompare .table, .drawer .table { min-width: 0; }
+  .table th, .table td { padding: 10px 12px; }
+
+  /* ---- document viewers & fields ---- */
+  .viewer { height: 58vh; padding: 10px; }
+  .viewer.sm { height: 46vh; }
+  .fields { grid-template-columns: minmax(0, 1fr); }
+  .gauge { max-width: 230px; }
+  .gauge-center .v { font-size: 34px; }
+
+  /* ---- overlays ---- */
+  .drawer { top: 0; right: 0; bottom: 0; width: 100vw; border-radius: 0; border-left: 0; }
+  .drawer-head { padding: 12px 14px; }
+  .drawer-body { grid-template-columns: minmax(0, 1fr); padding: 14px; gap: 14px; }
+  .modal { width: calc(100vw - 28px); }
+  .toasts { left: 12px; right: 12px; bottom: 12px; }
+  .toast { min-width: 0; max-width: none; }
+  .code { max-height: 360px; }
+}
+@media (max-width: 420px) {
+  .kpi-value { font-size: 20px; }
+  .page-title { font-size: 17px; }
+  .greet h1 { font-size: 23px; }
+  .tabs { padding: 6px 8px; }
+  .tab { padding: 0 10px; font-size: 12px; }
 }

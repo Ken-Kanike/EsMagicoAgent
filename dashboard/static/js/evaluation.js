@@ -99,6 +99,7 @@ registerPage("evaluation", {
   init() { $("#evRun").onclick = evRun; },
   async show() {
     const r = await api("/api/eval/latest");
+    await chartFontReady;
     if (r.available) evRender(r.result);
     else $("#evBanner").innerHTML = bannerHtml("muted", "No evaluation yet. Run one here or with: python scripts/eval.py");
     icons();

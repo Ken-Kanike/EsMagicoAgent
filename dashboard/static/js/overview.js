@@ -17,6 +17,12 @@ if (window.Chart) {
   Chart.defaults.plugins.tooltip.bodyColor = "#a8a39a";
 }
 
+// Chart.js sizes the axes with whatever font is available when the chart is created; if the
+// brand font loads afterwards, the wider labels are clipped. Charts wait for this promise.
+const chartFontReady = (document.fonts && document.fonts.load)
+  ? Promise.race([document.fonts.load("12px 'Plus Jakarta Sans'"), sleep(1500)]).catch(() => {})
+  : Promise.resolve();
+
 function vGradient(ctx, area, from, to) {
   const g = ctx.createLinearGradient(0, area.top, 0, area.bottom);
   g.addColorStop(0, from); g.addColorStop(1, to);
@@ -77,7 +83,7 @@ registerPage("overview", {
     $("#ovDate").innerHTML = `Today is <b>${new Date().toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</b>`;
     $("#ovKpis").innerHTML = Array(4).fill(`<div class="card kpi"><div class="kpi-label skeleton" style="width:60%">loading</div><div class="kpi-value skeleton" style="width:50%">000</div><div class="skeleton" style="height:46px;margin-top:12px"></div></div>`).join("");
 
-    const [o, ev] = await Promise.all([api("/api/overview"), api("/api/eval/latest").catch(() => ({ available: false }))]);
+    const [o, ev] = await Promise.all([api("/api/overview"), api("/api/eval/latest").catch(() => ({ available: false })), chartFontReady]);
     const e = o.eval;
     const recs = ev.available ? ev.result.document_records : [];
     const perDocCorrect = recs.map(r => Object.values(r.field_matches || {}).filter(Boolean).length);
