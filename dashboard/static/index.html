@@ -1,2205 +1,423 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
-
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>EsMagico AP Platform | Intelligent Document Processing</title>
-
-  <!-- Fonts -->
+  <title>Invoice Pipeline Console</title>
+  <meta name="description" content="Upload invoices, review validated JSON, run batches and templates, evaluate accuracy and cost.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
-    rel="stylesheet">
-
-  <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- Lucide Icons -->
-  <script src="https://unpkg.com/lucide@latest"></script>
-
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            ent: {
-              950: '#090a0f',
-              900: '#0d0f17',
-              850: '#121520',
-              800: '#171b29',
-              750: '#1c2234',
-              700: '#232b40',
-              border: '#232a3e',
-              borderLight: '#2f3954',
-              accent: '#2563eb',
-              accentHover: '#1d4ed8',
-            }
-          },
-          fontFamily: {
-            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
-            mono: ['"JetBrains Mono"', 'monospace'],
-          }
-        }
-      }
-    }
-  </script>
-
-  <style>
-    body {
-      background-color: #0b0d14;
-      color: #e2e8f0;
-      font-family: 'Inter', sans-serif;
-      min-height: 100vh;
-    }
-
-    .ent-card {
-      background: #121520;
-      border: 1px solid #20273c;
-      border-radius: 10px;
-    }
-
-    .ent-card:hover {
-      border-color: #2b3550;
-    }
-
-    .nav-btn {
-      color: #94a3b8;
-      transition: all 0.15s ease-in-out;
-    }
-
-    .nav-btn:hover {
-      color: #ffffff;
-      background: #1a2032;
-    }
-
-    .nav-btn.active {
-      color: #ffffff;
-      background: #20273d;
-      border: 1px solid #333f60;
-      font-weight: 600;
-    }
-
-    ::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
-    }
-
-    ::-webkit-scrollbar-track {
-      background: #0b0d14;
-    }
-
-    ::-webkit-scrollbar-thumb {
-      background: #1c2336;
-      border-radius: 3px;
-    }
-
-    ::-webkit-scrollbar-thumb:hover {
-      background: #2d3854;
-    }
-  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <script>tailwind.config = { corePlugins: { preflight: false } };</script>
+  <link rel="stylesheet" href="/static/css/app.css">
 </head>
-
-<body class="flex flex-col min-h-screen">
-
-  <!-- ENTERPRISE TOP NAVBAR -->
-  <header
-    class="bg-[#0e111a] border-b border-[#1e2538] px-6 py-2.5 flex items-center justify-between sticky top-0 z-50">
-    <div class="flex items-center space-x-6">
-
-      <!-- Clean Enterprise Brand Emblem -->
-      <div class="flex items-center space-x-3">
-        <div
-          class="w-8 h-8 rounded-lg bg-[#181d2c] border border-[#28324a] flex items-center justify-center text-blue-400">
-          <svg class="w-4 h-4 text-blue-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
-            stroke-linecap="round" stroke-linejoin="round">
-            <polygon points="12 2 2 7 12 12 22 7 12 2" />
-            <polyline points="2 17 12 22 22 17" />
-            <polyline points="2 12 12 17 22 12" />
-          </svg>
-        </div>
-        <div>
-          <div class="text-sm font-semibold tracking-tight text-white flex items-center space-x-2">
-            <span>EsMagico</span>
-            <span
-              class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#181f30] text-blue-300 border border-[#26324e]">ENTERPRISE
-              AP</span>
-          </div>
-          <div class="text-[11px] text-slate-400">Intelligent Document Processing</div>
-        </div>
+<body>
+<div class="app">
+  <!-- ============================== SIDEBAR ============================== -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark"><i data-lucide="file-scan" style="width:17px;height:17px"></i></div>
+      <div>
+        <div class="brand-title">Invoice Pipeline</div>
+        <div class="brand-sub">Extraction · Validation · Eval</div>
       </div>
-
-      <!-- Navigation Tabs -->
-      <nav class="flex items-center space-x-1 p-1 bg-[#121622] border border-[#1e2538] rounded-lg text-xs">
-        <button onclick="navigatePage('workspace')" id="navWorkspace"
-          class="nav-btn active px-3.5 py-1.5 rounded-md flex items-center space-x-1.5">
-          <i data-lucide="layout" class="w-3.5 h-3.5"></i>
-          <span>Workspace</span>
-        </button>
-        <button onclick="navigatePage('batch')" id="navBatch"
-          class="nav-btn px-3.5 py-1.5 rounded-md flex items-center space-x-1.5">
-          <i data-lucide="layers" class="w-3.5 h-3.5"></i>
-          <span>Batch Ingestion</span>
-        </button>
-        <button onclick="navigatePage('templates')" id="navTemplates"
-          class="nav-btn px-3.5 py-1.5 rounded-md flex items-center space-x-1.5">
-          <i data-lucide="scan-line" class="w-3.5 h-3.5 text-amber-400"></i>
-          <span>Template Studio</span>
-        </button>
-        <button onclick="navigatePage('analytics')" id="navAnalytics"
-          class="nav-btn px-3.5 py-1.5 rounded-md flex items-center space-x-1.5">
-          <i data-lucide="bar-chart-2" class="w-3.5 h-3.5"></i>
-          <span>Evaluation Benchmark</span>
-        </button>
-        <button onclick="navigatePage('mcp')" id="navMcp"
-          class="nav-btn px-3.5 py-1.5 rounded-md flex items-center space-x-1.5">
-          <i data-lucide="cpu" class="w-3.5 h-3.5"></i>
-          <span>MCP Tools</span>
-        </button>
-        <button onclick="navigatePage('settings')" id="navSettings"
-          class="nav-btn px-3.5 py-1.5 rounded-md flex items-center space-x-1.5">
-          <i data-lucide="settings" class="w-3.5 h-3.5"></i>
-          <span>Security & API Keys</span>
-        </button>
-      </nav>
     </div>
-
-    <!-- Right Controls -->
-    <div class="flex items-center space-x-3 text-xs">
-      <!-- PII Shield Status Indicator -->
-      <div id="piiShieldBadge"
-        class="flex items-center space-x-2 px-2.5 py-1 rounded-md bg-[#131e1c] border border-emerald-800 text-emerald-400 font-mono text-[11px]">
-        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-        <span>PII Shield Active</span>
-      </div>
-
-      <!-- AI Mode Selector -->
-      <div class="flex items-center space-x-2 bg-[#121622] border border-[#1e2538] rounded-md px-2.5 py-1.5">
-        <span class="text-slate-400 font-mono text-[11px]">Engine:</span>
-        <select id="headerModeSelect" onchange="onModeChange()"
-          class="bg-transparent text-white focus:outline-none font-medium cursor-pointer">
-          <option value="no_ai" class="bg-[#121622]">No-AI (Rule & Layout Engine)</option>
-          <option value="groq" class="bg-[#121622]">Groq Cloud (10-Key Rotation)</option>
-          <option value="local" class="bg-[#121622]">Local LLM (Ollama/Hermes)</option>
-          <option value="gemini" class="bg-[#121622]">Google Gemini 1.5</option>
-          <option value="openai" class="bg-[#121622]">OpenAI GPT-4o-mini</option>
-        </select>
-      </div>
-
-      <!-- Quick Export Excel Button -->
-      <a href="/api/export/excel" download
-        class="flex items-center space-x-1.5 bg-emerald-700 hover:bg-emerald-600 text-white font-medium px-3 py-1.5 rounded-md transition shadow-sm">
-        <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i>
-        <span>Export .xlsx</span>
-      </a>
+    <nav class="nav">
+      <div class="nav-group">Operate</div>
+      <button class="nav-item" data-page="overview"><i data-lucide="layout-dashboard"></i>Overview<span class="count hidden" id="navReviewCount"></span></button>
+      <button class="nav-item" data-page="workspace"><i data-lucide="file-search"></i>Workspace</button>
+      <button class="nav-item" data-page="batch"><i data-lucide="layers"></i>Batch processing</button>
+      <div class="nav-group">Build</div>
+      <button class="nav-item" data-page="templates"><i data-lucide="scan-line"></i>Template studio</button>
+      <div class="nav-group">Measure</div>
+      <button class="nav-item" data-page="evaluation"><i data-lucide="bar-chart-3"></i>Evaluation</button>
+      <div class="nav-group">Integrate</div>
+      <button class="nav-item" data-page="mcp"><i data-lucide="plug"></i>MCP &amp; agents</button>
+      <button class="nav-item" data-page="settings"><i data-lucide="settings-2"></i>Settings</button>
+    </nav>
+    <div class="sidebar-foot">
+      <div id="footHealth"><span class="dot"></span> Connecting…</div>
+      <div id="footEngine" class="flex items-center gap-1.5"></div>
+      <div id="footPii"></div>
+      <a href="/docs" target="_blank" class="flex items-center gap-1.5"><i data-lucide="book-open" style="width:13px;height:13px"></i>REST API docs</a>
     </div>
-  </header>
+  </aside>
 
-  <!-- MAIN APP CONTAINER -->
-  <main class="flex-1 p-5 max-w-[1920px] mx-auto w-full">
-
-    <!-- ========================================================= -->
-    <!-- PAGE 1: WORKSPACE (DOCUMENT VIEWER & STRUCTURED FIELDS)   -->
-    <!-- ========================================================= -->
-    <div id="pageWorkspace" class="space-y-4">
-
-      <!-- Top Action Bar -->
-      <div class="ent-card p-3 flex flex-wrap items-center justify-between gap-3">
-        <div class="flex items-center space-x-3 flex-1 min-w-[320px]">
-          <div class="flex items-center space-x-2">
-            <span class="text-xs text-slate-400 font-medium">Document:</span>
-            <select id="docSelect" onchange="loadSelectedDocument()"
-              class="bg-[#0d0f17] border border-[#20273c] text-xs text-white rounded-md px-2.5 py-1.5 font-mono cursor-pointer focus:outline-none min-w-[260px]">
-              <!-- Dynamically populated -->
-            </select>
-          </div>
-
-          <!-- Single File Upload -->
-          <label
-            class="cursor-pointer bg-[#181d2c] hover:bg-[#20273c] border border-[#20273c] text-xs text-slate-200 px-3 py-1.5 rounded-md flex items-center space-x-1.5 transition">
-            <i data-lucide="upload" class="w-3.5 h-3.5 text-blue-400"></i>
-            <span>Upload File</span>
-            <input type="file" id="fileUploadInput" onchange="handleSingleFileUpload(event)"
-              accept=".pdf,.jpg,.jpeg,.png" class="hidden" />
-          </label>
-        </div>
-
-        <div class="flex items-center space-x-2">
-          <button id="btnExtract" onclick="extractCurrentDocument()"
-            class="bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs px-4 py-1.5 rounded-md shadow flex items-center space-x-1.5 transition">
-            <i data-lucide="play" class="w-3.5 h-3.5 fill-current"></i>
-            <span>Extract & Validate</span>
-          </button>
-        </div>
+  <!-- ============================== MAIN ============================== -->
+  <div class="main">
+    <header class="topbar">
+      <div>
+        <div class="page-title" id="pageTitle">Overview</div>
+        <div class="page-sub" id="pageSub"></div>
       </div>
-
-      <!-- SPLIT WORKSPACE: VIEWER (LEFT) & VERIFIED DATA (RIGHT) -->
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 h-[calc(100vh-175px)] min-h-[660px]">
-
-        <!-- LEFT: VIEWER (5 Cols) -->
-        <div class="lg:col-span-5 ent-card flex flex-col overflow-hidden">
-          <div class="p-3 border-b border-[#20273c] flex items-center justify-between text-xs">
-            <div class="flex items-center space-x-2">
-              <i data-lucide="file-text" class="w-4 h-4 text-slate-400"></i>
-              <span id="viewerFilename" class="font-medium text-white">L01.pdf</span>
-              <span id="viewerBadge"
-                class="bg-[#181d2c] text-slate-300 text-[10px] font-mono px-2 py-0.5 rounded border border-[#20273c]">Digital
-                PDF</span>
-            </div>
-            <!-- Zoom Controls -->
-            <div class="flex items-center space-x-1 bg-[#0d0f17] p-0.5 rounded border border-[#20273c]">
-              <button onclick="zoom(1.15)" class="p-1 hover:text-white text-slate-400 hover:bg-[#181d2c] rounded"><i
-                  data-lucide="zoom-in" class="w-3.5 h-3.5"></i></button>
-              <button onclick="zoom(0.85)" class="p-1 hover:text-white text-slate-400 hover:bg-[#181d2c] rounded"><i
-                  data-lucide="zoom-out" class="w-3.5 h-3.5"></i></button>
-              <button onclick="zoomReset()" class="p-1 hover:text-white text-slate-400 hover:bg-[#181d2c] rounded"><i
-                  data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i></button>
-            </div>
-          </div>
-
-          <!-- Document Render Frame & Dropzone -->
-          <div id="docViewerContainer"
-            class="flex-1 bg-[#090b12] p-4 flex items-center justify-center overflow-auto relative">
-            <div id="dropOverlay"
-              class="absolute inset-0 bg-blue-950/85 border-2 border-dashed border-blue-400 rounded-lg flex flex-col items-center justify-center hidden pointer-events-none z-20">
-              <i data-lucide="upload-cloud" class="w-10 h-10 text-blue-400 mb-2"></i>
-              <span class="text-sm font-semibold text-white">Drop file to extract instantly</span>
-              <span class="text-xs text-blue-200 mt-0.5">PDF, JPG, or PNG</span>
-            </div>
-            <img id="docPreviewImg" src="/api/documents/L01/preview" alt="Invoice Rendering"
-              class="max-h-full max-w-full object-contain shadow-md rounded transition-transform duration-150" />
-          </div>
-        </div>
-
-        <!-- RIGHT: STRUCTURED DATA & VERIFICATION (7 Cols) -->
-        <div class="lg:col-span-7 ent-card flex flex-col overflow-hidden">
-
-          <!-- View Tabs & Quick Actions -->
-          <div class="p-3 border-b border-[#20273c] flex items-center justify-between text-xs">
-            <div class="flex items-center space-x-1 bg-[#0d0f17] p-0.5 rounded border border-[#20273c]">
-              <button id="tabBtnFields" onclick="switchRightTab('fields')"
-                class="px-3 py-1 rounded bg-[#1c2236] text-white font-medium">Summary Fields</button>
-              <button id="tabBtnItems" onclick="switchRightTab('items')"
-                class="px-3 py-1 rounded text-slate-400 hover:text-white">Line Items (<span
-                  id="tabItemCountBadge">0</span>)</button>
-              <button id="tabBtnJson" onclick="switchRightTab('json')"
-                class="px-3 py-1 rounded text-slate-400 hover:text-white">Raw JSON</button>
-            </div>
-
-            <div class="flex items-center space-x-2">
-              <button onclick="downloadDocumentJson()"
-                class="bg-[#181d2c] hover:bg-[#20273c] border border-[#20273c] text-slate-200 text-xs px-2.5 py-1 rounded flex items-center space-x-1">
-                <i data-lucide="download" class="w-3 h-3"></i>
-                <span>JSON</span>
-              </button>
-              <a href="/api/export/excel"
-                class="bg-[#181d2c] hover:bg-[#20273c] border border-[#20273c] text-slate-200 text-xs px-2.5 py-1 rounded flex items-center space-x-1">
-                <i data-lucide="file-spreadsheet" class="w-3 h-3 text-emerald-400"></i>
-                <span>Excel</span>
-              </a>
-            </div>
-          </div>
-
-          <!-- Right Content Body -->
-          <div class="flex-1 overflow-auto p-4 space-y-4">
-
-            <!-- Non-Invoice Explanatory Banner -->
-            <div id="bannerNonInvoice"
-              class="hidden bg-sky-950/40 border border-sky-800/80 p-3.5 rounded text-xs text-sky-200 flex items-start space-x-3">
-              <i data-lucide="info" class="w-4 h-4 text-sky-400 shrink-0 mt-0.5"></i>
-              <div>
-                <strong class="font-semibold text-white">NON-INVOICE DOCUMENT CLASSIFICATION</strong>
-                <p class="text-sky-300 mt-0.5">This document was identified as a Purchase Order, Statement, or Letter.
-                  Per assignment schema rules: <code
-                    class="bg-sky-900/60 px-1.5 py-0.5 rounded text-white font-mono">"is_invoice": false</code> and all
-                  remaining 7 fields (<code
-                    class="text-sky-200">vendor, invoice_number, invoice_date, currency, line_items, tax_total, total</code>)
-                  are strictly set to <code class="text-white">null</code>.</p>
-              </div>
-            </div>
-
-            <!-- Validation Status Bar -->
-            <div id="bannerValidation"
-              class="bg-emerald-950/30 border border-emerald-800/60 p-3 rounded flex items-center justify-between text-xs">
-              <div id="validationTextWrap" class="flex items-center space-x-2 text-emerald-300">
-                <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400"></i>
-                <span id="validationText" class="font-medium">—</span>
-              </div>
-              <div id="mathDiffBadge"
-                class="font-mono text-xs text-emerald-400 bg-emerald-900/40 px-2 py-0.5 rounded font-bold">
-                DIFF &plusmn;0.00
-              </div>
-            </div>
-
-            <!-- TAB 1: SUMMARY FIELDS VIEW -->
-            <div id="viewFields" class="space-y-4">
-              <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-                <div class="bg-[#0e111a] border border-[#20273c] p-3 rounded">
-                  <div class="text-[10px] text-slate-400 uppercase font-mono">Vendor (Seller)</div>
-                  <div id="fldVendor" class="text-sm font-semibold text-white mt-0.5 truncate">—</div>
-                </div>
-                <div class="bg-[#0e111a] border border-[#20273c] p-3 rounded">
-                  <div class="text-[10px] text-slate-400 uppercase font-mono">Invoice Number</div>
-                  <div id="fldInvNum" class="text-sm font-semibold font-mono text-blue-400 mt-0.5 truncate">—</div>
-                </div>
-                <div class="bg-[#0e111a] border border-[#20273c] p-3 rounded">
-                  <div class="text-[10px] text-slate-400 uppercase font-mono">Issue Date (ISO 8601)</div>
-                  <div id="fldDate" class="text-sm font-semibold font-mono text-white mt-0.5">—</div>
-                </div>
-                <div class="bg-[#0e111a] border border-[#20273c] p-3 rounded">
-                  <div class="text-[10px] text-slate-400 uppercase font-mono">Currency Code</div>
-                  <div id="fldCurrency" class="text-sm font-semibold font-mono text-emerald-400 mt-0.5">—</div>
-                </div>
-                <div class="bg-[#0e111a] border border-[#20273c] p-3 rounded">
-                  <div class="text-[10px] text-slate-400 uppercase font-mono">Tax Total</div>
-                  <div id="fldTax" class="text-sm font-semibold font-mono text-white mt-0.5">—</div>
-                </div>
-                <div class="bg-[#0e111a] border border-[#20273c] p-3 rounded">
-                  <div class="text-[10px] text-slate-400 uppercase font-mono">Grand Total Due</div>
-                  <div id="fldTotal" class="text-sm font-semibold font-mono text-white mt-0.5">—</div>
-                </div>
-              </div>
-
-              <!-- Line Items Preview -->
-              <div class="space-y-2">
-                <div class="flex items-center justify-between text-xs text-slate-400">
-                  <span class="font-medium text-slate-300">Line Items Preview</span>
-                  <button onclick="switchRightTab('items')" class="text-blue-400 hover:underline">View All
-                    &rarr;</button>
-                </div>
-                <div class="border border-[#20273c] rounded overflow-hidden">
-                  <table class="w-full text-left text-xs font-mono">
-                    <thead class="bg-[#0e111a] text-slate-400 border-b border-[#20273c]">
-                      <tr>
-                        <th class="p-2.5">Description</th>
-                        <th class="p-2.5 text-right">Qty</th>
-                        <th class="p-2.5 text-right">Row Amount</th>
-                      </tr>
-                    </thead>
-                    <tbody id="quickItemsBody" class="divide-y divide-[#20273c] bg-[#121520]">
-                      <!-- Injected dynamically -->
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-
-            <!-- TAB 2: COMPLETE LINE ITEMS TABLE -->
-            <div id="viewItems" class="hidden space-y-2">
-              <div class="border border-[#20273c] rounded overflow-hidden">
-                <table class="w-full text-left text-xs font-mono">
-                  <thead class="bg-[#0e111a] text-slate-400 border-b border-[#20273c]">
-                    <tr>
-                      <th class="p-2.5">#</th>
-                      <th class="p-2.5">Item Description</th>
-                      <th class="p-2.5 text-right">Quantity</th>
-                      <th class="p-2.5 text-right">Amount</th>
-                    </tr>
-                  </thead>
-                  <tbody id="fullItemsBody" class="divide-y divide-[#20273c] bg-[#121520]">
-                    <!-- Injected dynamically -->
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <!-- TAB 3: RAW JSON CODE VIEW -->
-            <div id="viewJson" class="hidden space-y-2">
-              <div class="flex items-center justify-between text-xs text-slate-400 font-mono">
-                <span>Schema-Compliant Output Payload</span>
-                <button onclick="copyJson()" class="text-blue-400 hover:underline flex items-center space-x-1">
-                  <i data-lucide="copy" class="w-3 h-3"></i>
-                  <span>Copy</span>
-                </button>
-              </div>
-              <pre
-                class="bg-[#090b12] border border-[#20273c] p-4 rounded text-xs font-mono text-emerald-400 overflow-auto max-h-[500px]"><code id="rawJsonCode">{}</code></pre>
-            </div>
-
-          </div>
-        </div>
-
-      </div>
-
-    </div>
-
-    <!-- ========================================================= -->
-    <!-- PAGE 2: BATCH INGESTION (PROCESSED UPLOADS ONLY)          -->
-    <!-- ========================================================= -->
-    <div id="pageBatch" class="hidden space-y-5">
-
-      <!-- BATCH MULTI-FILE UPLOAD CARD -->
-      <div class="ent-card p-5 space-y-4">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h2 class="text-base font-semibold text-white">Batch Document Ingestion</h2>
-            <p class="text-xs text-slate-400 mt-0.5">Upload new invoice documents in bulk. Extraction runs strictly for
-              files uploaded in this batch.</p>
-          </div>
-
-          <div class="flex items-center space-x-2">
-            <button onclick="executeUploadedBatch()" id="btnExecuteBatch"
-              class="bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-white font-medium text-xs px-4 py-2 rounded shadow flex items-center space-x-1.5 transition">
-              <i data-lucide="play" class="w-3.5 h-3.5 fill-current"></i>
-              <span id="btnExecuteBatchLabel">Process Batch (0 Files)</span>
-            </button>
-            <button onclick="exportBatchExcel()" id="btnBatchExcel"
-              class="bg-emerald-700 hover:bg-emerald-600 disabled:opacity-40 text-white font-medium text-xs px-3.5 py-2 rounded flex items-center space-x-1.5 transition">
-              <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i>
-              <span>Download Excel (.xlsx)</span>
-            </button>
-            <button onclick="exportBatchZip()" id="btnBatchZip"
-              class="bg-[#181d2c] hover:bg-[#20273c] border border-[#20273c] text-slate-200 text-xs px-3 py-2 rounded flex items-center space-x-1.5 transition">
-              <i data-lucide="archive" class="w-3.5 h-3.5"></i>
-              <span>Download JSON (.zip)</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- Drag & Drop Zone -->
-        <div id="batchDropZone"
-          class="border-2 border-dashed border-[#232b40] hover:border-blue-500 rounded-lg p-7 text-center bg-[#090b12] transition-colors cursor-pointer relative">
-          <input type="file" id="batchMultiFileInput" multiple accept=".pdf,.png,.jpg,.jpeg"
-            onchange="handleBatchFilesSelected(event)"
-            class="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10" />
-
-          <div class="flex flex-col items-center justify-center space-y-2 pointer-events-none">
-            <div
-              class="w-10 h-10 rounded-lg bg-[#141824] border border-[#252f48] flex items-center justify-center text-blue-400">
-              <i data-lucide="upload-cloud" class="w-5 h-5"></i>
-            </div>
-            <div class="text-sm font-medium text-white">
-              Drag & drop invoice files here, or <span class="text-blue-400 underline">browse files</span>
-            </div>
-            <div class="text-xs text-slate-400">
-              Select multiple PDFs, JPGs, or PNGs to process simultaneously
-            </div>
-          </div>
-        </div>
-
-        <!-- Queued Files Chips -->
-        <div id="batchQueuedFilesArea" class="hidden space-y-2 pt-2 border-t border-[#20273c]">
-          <div class="flex items-center justify-between text-xs">
-            <span class="text-slate-300 font-medium">Selected Files (<span id="batchQueuedCount">0</span> ready to
-              extract)</span>
-            <button onclick="clearBatchQueue()" class="text-rose-400 hover:underline">Clear</button>
-          </div>
-          <div id="batchFileChips"
-            class="flex flex-wrap gap-2 max-h-32 overflow-auto p-2 bg-[#090b12] rounded border border-[#20273c]">
-            <!-- Chips injected here -->
-          </div>
-        </div>
-
-        <!-- Progress Bar -->
-        <div id="batchProgressContainer" class="hidden space-y-1.5 pt-2">
-          <div class="flex justify-between text-xs text-slate-400 font-mono">
-            <span id="batchProgressStatus">Processing batch...</span>
-            <span id="batchProgressPercent">0%</span>
-          </div>
-          <div class="w-full bg-[#090b12] rounded-full h-2 overflow-hidden border border-[#20273c]">
-            <div id="batchProgressBar" class="bg-blue-600 h-2 transition-all duration-200" style="width: 0%"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Batch Ledger Table (Clean & Empty by default!) -->
-      <div class="ent-card p-5 space-y-3">
-        <div class="flex items-center justify-between">
-          <div>
-            <span class="text-sm font-semibold text-white">Batch Extracted Records</span>
-            <span class="text-xs text-slate-400 ml-2" id="batchLedgerCountLabel">(0 Documents Processed)</span>
-          </div>
-          <!-- Optional sample pack trigger for testing -->
-          <button onclick="loadSystemSamplesIntoBatch()"
-            class="text-xs text-slate-400 hover:text-blue-400 underline flex items-center space-x-1">
-            <i data-lucide="folder" class="w-3.5 h-3.5"></i>
-            <span>Or load preloaded 20 sample files</span>
-          </button>
-        </div>
-
-        <div class="border border-[#20273c] rounded overflow-hidden">
-          <table class="w-full text-left text-xs font-mono">
-            <thead class="bg-[#0e111a] text-slate-400 border-b border-[#20273c]">
-              <tr>
-                <th class="p-3">Doc ID</th>
-                <th class="p-3">File Name</th>
-                <th class="p-3 text-center">Is Invoice?</th>
-                <th class="p-3">Vendor</th>
-                <th class="p-3">Invoice #</th>
-                <th class="p-3">Date</th>
-                <th class="p-3 text-right">Tax</th>
-                <th class="p-3 text-right">Grand Total</th>
-                <th class="p-3 text-center">Status</th>
-              </tr>
-            </thead>
-            <tbody id="batchTableBody" class="divide-y divide-[#20273c] bg-[#121520]">
-              <tr>
-                <td colspan="9" class="p-8 text-center text-slate-500 font-sans">
-                  No batch documents processed yet. Drag & drop files above to extract.
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-    </div>
-
-    <!-- ========================================================= -->
-    <!-- PAGE 3: TEMPLATE STUDIO (WITH DOCUMENT IMAGE PREVIEW)     -->
-    <!-- ========================================================= -->
-    <div id="pageTemplates" class="hidden space-y-5">
-
-      <!-- Studio Header -->
-      <div class="ent-card p-4 flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h2 class="text-base font-semibold text-white flex items-center space-x-2">
-            <i data-lucide="scan-line" class="w-4 h-4 text-amber-400"></i>
-            <span>Custom Defined Extractions & Template Studio</span>
-          </h2>
-          <p class="text-xs text-slate-400 mt-0.5">Upload any document, view its visual rendering, select discovered
-            fields, and save custom OCR templates.</p>
-        </div>
-
-        <!-- Saved Templates Selector -->
-        <div class="flex items-center space-x-2">
-          <span class="text-xs text-slate-400">Template:</span>
-          <select id="studioTemplateSelect" onchange="onTemplateSelectChange()"
-            class="bg-[#0d0f17] border border-[#20273c] text-xs text-white rounded px-2.5 py-1.5 focus:border-blue-500">
-            <!-- Populated -->
+      <div class="flex items-center gap-2">
+        <label class="flex items-center gap-2 card" style="padding:4px 4px 4px 10px">
+          <span class="muted" style="font-size:11.5px">Engine</span>
+          <select id="modeSelect" class="select" style="width:auto;border:0;background:transparent;padding:4px 6px" title="Backend used by actions on this page">
+            <option value="groq">Groq · qwen3.8 vision + gpt-oss</option>
+            <option value="openai">OpenAI-compatible</option>
+            <option value="gemini">Gemini</option>
+            <option value="local">Local LLM</option>
+            <option value="no_ai">Rule baseline (no LLM)</option>
           </select>
-          <button onclick="createNewTemplateDraft()"
-            class="bg-[#181d2c] hover:bg-[#20273c] border border-[#20273c] text-amber-300 text-xs px-3 py-1.5 rounded flex items-center space-x-1">
-            <i data-lucide="plus" class="w-3.5 h-3.5"></i>
-            <span>New Template</span>
-          </button>
-          <button onclick="deleteSelectedTemplate()"
-            class="bg-[#181d2c] hover:bg-[#20273c] border border-[#20273c] text-rose-300 text-xs px-3 py-1.5 rounded flex items-center space-x-1">
-            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-            <span>Delete</span>
-          </button>
-        </div>
+        </label>
+        <a class="btn" href="/api/export/excel"><i data-lucide="file-spreadsheet"></i>Export outputs</a>
       </div>
+    </header>
 
-      <!-- Studio Main Split: VISUAL PREVIEW & INTAKE (LEFT) & FIELD BUILDER (RIGHT) -->
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 min-h-[640px]">
+    <main class="content">
 
-        <!-- LEFT: VISUAL DOCUMENT PREVIEW & SCAN (5 Cols) -->
-        <div class="lg:col-span-5 ent-card p-4 flex flex-col space-y-3">
-          <div class="flex items-center justify-between text-xs border-b border-[#20273c] pb-2">
-            <span class="font-semibold text-slate-300">1. Document Visual Preview</span>
-            <!-- Zoom -->
-            <div class="flex items-center space-x-1">
-              <button onclick="zoomStudio(1.15)" class="p-1 hover:text-white text-slate-400"><i data-lucide="zoom-in"
-                  class="w-3.5 h-3.5"></i></button>
-              <button onclick="zoomStudio(0.85)" class="p-1 hover:text-white text-slate-400"><i data-lucide="zoom-out"
-                  class="w-3.5 h-3.5"></i></button>
-              <button onclick="zoomStudioReset()" class="p-1 hover:text-white text-slate-400"><i
-                  data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i></button>
+      <!-- ============================== OVERVIEW ============================== -->
+      <section class="page" id="page-overview">
+        <div class="grid gap-4" style="grid-template-columns:repeat(auto-fit,minmax(190px,1fr))" id="ovKpis"></div>
+
+        <div class="card">
+          <div class="card-head"><div class="card-title"><i data-lucide="workflow"></i>How a document flows through the pipeline</div>
+            <span class="card-sub">Every path ends in validated JSON or an explicit flag; nothing bad is passed on silently</span></div>
+          <div class="card-pad">
+            <div class="flow">
+              <div class="flow-step"><div class="t"><i data-lucide="file-input"></i>Load</div><div class="d">PDF / image. Corrupt, empty, password-protected or unsupported files return a typed error.</div></div>
+              <div class="flow-arrow"><i data-lucide="chevron-right"></i></div>
+              <div class="flow-step"><div class="t"><i data-lucide="git-fork"></i>Route</div><div class="d">Text layer → text model (exact chars). Scans → auto-upright, 200 dpi, vision model.</div></div>
+              <div class="flow-arrow"><i data-lucide="chevron-right"></i></div>
+              <div class="flow-step"><div class="t"><i data-lucide="sparkles"></i>Extract</div><div class="d">LLM in JSON mode with the sample-pack labelling rules in the prompt.</div></div>
+              <div class="flow-arrow"><i data-lucide="chevron-right"></i></div>
+              <div class="flow-step"><div class="t"><i data-lucide="shield-check"></i>Validate</div><div class="d">Pydantic schema, required fields, Σ items + tax = total, qty × price, due-date sanity.</div></div>
+              <div class="flow-arrow"><i data-lucide="chevron-right"></i></div>
+              <div class="flow-step"><div class="t"><i data-lucide="rotate-ccw"></i>Retry</div><div class="d">Up to 2 corrective turns quoting the exact validation errors; best attempt kept.</div></div>
+              <div class="flow-arrow"><i data-lucide="chevron-right"></i></div>
+              <div class="flow-step"><div class="t"><i data-lucide="flag"></i>Flag</div><div class="d">Anything still failing → <span class="mono">needs_review</span> with reasons.</div></div>
             </div>
           </div>
-
-          <!-- Document Intake Controls -->
-          <div class="flex items-center space-x-2 text-xs">
-            <label
-              class="cursor-pointer bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded flex items-center space-x-1.5 font-medium transition">
-              <i data-lucide="upload" class="w-3.5 h-3.5"></i>
-              <span>Upload Document</span>
-              <input type="file" id="studioDocInput" accept=".pdf,.png,.jpg,.jpeg"
-                onchange="handleStudioDocUpload(event)" class="hidden" />
-            </label>
-
-            <span class="text-slate-500">or</span>
-
-            <select id="studioSampleSelect" onchange="onStudioSampleSelectChange()"
-              class="bg-[#0d0f17] border border-[#20273c] text-xs text-white rounded px-2 py-1.5 flex-1 font-mono">
-              <option value="">-- Choose Sample --</option>
-              <option value="L01">L01 — Digital Invoice</option>
-              <option value="L02">L02 — Receipt Image</option>
-              <option value="L04">L04 — Dense Table Invoice</option>
-              <option value="L08">L08 — Purchase Order</option>
-              <option value="U01">U01 — Unlabelled Sample</option>
-            </select>
-          </div>
-
-          <!-- Visual Image Preview Frame (CRUCIAL FIX!) -->
-          <div id="studioViewerContainer"
-            class="flex-1 bg-[#090b12] border border-[#20273c] rounded p-2 flex items-center justify-center overflow-auto min-h-[360px] relative">
-            <div id="studioNoPreviewNotice" class="text-center text-slate-500 text-xs p-6">
-              <i data-lucide="file-image" class="w-10 h-10 mx-auto text-slate-600 mb-2"></i>
-              <span>Upload or select any document to inspect visual rendering</span>
-            </div>
-            <img id="studioPreviewImg" src="" alt="Document Preview"
-              class="max-h-full max-w-full object-contain shadow rounded hidden transition-transform duration-150" />
-          </div>
-
-          <!-- Scan Button -->
-          <button id="btnDiscoverFields" onclick="triggerDiscovery()"
-            class="bg-[#181d2c] hover:bg-[#20273c] border border-blue-500/40 text-blue-300 font-medium text-xs py-2 rounded flex items-center justify-center space-x-2 transition">
-            <i data-lucide="scan" class="w-4 h-4 text-blue-400"></i>
-            <span>Scan & Auto-Discover All Fields</span>
-          </button>
         </div>
 
-        <!-- RIGHT: CUSTOM FIELD DEFINITIONS & SCHEMA (7 Cols) -->
-        <div class="lg:col-span-7 ent-card p-4 flex flex-col space-y-4">
-          <div class="flex items-center justify-between border-b border-[#20273c] pb-3 text-xs">
-            <div>
-              <span class="font-semibold text-white">2. Custom Field Selection & Schema</span>
-              <p class="text-[11px] text-slate-400 mt-0.5">Toggle fields to include in your output template, or add
-                custom fields below.</p>
-            </div>
-
-            <button onclick="saveCurrentTemplate()"
-              class="bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs px-3.5 py-1.5 rounded flex items-center space-x-1.5 shadow">
-              <i data-lucide="save" class="w-3.5 h-3.5"></i>
-              <span>Save Template</span>
-            </button>
+        <div class="grid gap-4" style="grid-template-columns:minmax(0,3fr) minmax(0,2fr)">
+          <div class="card">
+            <div class="card-head"><div class="card-title"><i data-lucide="inbox"></i>Review queue</div><span class="card-sub" id="ovQueueSub"></span></div>
+            <div id="ovQueue"></div>
           </div>
+          <div class="card">
+            <div class="card-head"><div class="card-title"><i data-lucide="bar-chart-3"></i>Field accuracy (labelled set)</div>
+              <button class="btn btn-sm btn-ghost" onclick="navigate('evaluation')">Details<i data-lucide="arrow-right"></i></button></div>
+            <div class="card-pad"><div style="height:230px"><canvas id="ovChart"></canvas></div></div>
+          </div>
+        </div>
 
-          <!-- Template Metadata -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 bg-[#0d0f17] p-3 rounded border border-[#20273c]">
-            <div>
-              <label class="text-[11px] text-slate-400 font-mono">Template Name</label>
-              <input type="text" id="inputTemplateName" placeholder="e.g. Mumbai University Hall Ticket"
-                class="w-full bg-[#121520] border border-[#20273c] text-xs text-white p-2 rounded mt-1 focus:border-blue-500 focus:outline-none" />
+        <div class="card">
+          <div class="card-head"><div class="card-title"><i data-lucide="folder-output"></i>Deliverable outputs <span class="mono muted" style="font-weight:400">outputs/*.json</span></div>
+            <div class="flex gap-2"><a class="btn btn-sm" href="/api/export/zip"><i data-lucide="file-archive"></i>JSON .zip</a><a class="btn btn-sm" href="/api/export/excel"><i data-lucide="file-spreadsheet"></i>Excel</a></div></div>
+          <div class="table-wrap" style="max-height:520px">
+            <table class="table"><thead><tr><th>Doc</th><th>Type</th><th>Vendor</th><th>Invoice #</th><th>Date</th><th class="num">Items</th><th class="num">Total</th><th class="center">Σ check</th></tr></thead>
+              <tbody id="ovOutputs"></tbody></table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================== WORKSPACE ============================== -->
+      <section class="page" id="page-workspace">
+        <div class="card card-pad flex flex-wrap items-center gap-3 justify-between">
+          <div class="flex flex-wrap items-center gap-2">
+            <select id="wsDoc" class="select" style="width:280px"></select>
+            <button class="btn btn-primary" id="wsExtract"><i data-lucide="play"></i>Extract &amp; validate</button>
+            <label class="btn" for="wsUpload"><i data-lucide="upload"></i>Upload a document</label>
+            <input type="file" id="wsUpload" accept=".pdf,.png,.jpg,.jpeg,.webp,.tif,.tiff" class="hidden">
+          </div>
+          <div class="hint">Results from this page are saved to <span class="mono">outputs/dashboard/</span>; deliverables are only written by the CLI.</div>
+        </div>
+        <div class="grid gap-4" style="grid-template-columns:minmax(0,5fr) minmax(0,6fr)">
+          <div class="card">
+            <div class="card-head">
+              <div class="card-title"><i data-lucide="file-text"></i><span id="wsDocName">Document</span></div>
+              <div class="flex items-center gap-1">
+                <span id="wsPager" class="flex items-center gap-1"></span>
+                <button class="btn btn-sm btn-icon" id="wsZoomOut" title="Zoom out"><i data-lucide="zoom-out"></i></button>
+                <button class="btn btn-sm btn-icon" id="wsZoomReset" title="Reset zoom"><i data-lucide="maximize"></i></button>
+                <button class="btn btn-sm btn-icon" id="wsZoomIn" title="Zoom in"><i data-lucide="zoom-in"></i></button>
+              </div>
             </div>
-            <div>
-              <label class="text-[11px] text-slate-400 font-mono">Description / Notes</label>
-              <input type="text" id="inputTemplateDesc"
-                placeholder="e.g. Extracts PRN, Seat Number, College, and Center"
-                class="w-full bg-[#121520] border border-[#20273c] text-xs text-white p-2 rounded mt-1 focus:border-blue-500 focus:outline-none" />
+            <div class="card-pad"><div class="viewer" id="wsViewer"><img id="wsImg" alt="document preview"></div></div>
+          </div>
+          <div class="card">
+            <div class="tabs">
+              <button class="tab active" data-tab="fields"><i data-lucide="list"></i>Fields</button>
+              <button class="tab" data-tab="items"><i data-lucide="table"></i>Line items</button>
+              <button class="tab" data-tab="compare"><i data-lucide="git-compare"></i>vs ground truth</button>
+              <button class="tab" data-tab="json"><i data-lucide="braces"></i>JSON</button>
+            </div>
+            <div class="card-pad">
+              <div id="wsBanner" class="mb-3"></div>
+              <div id="wsMeta" class="flex flex-wrap gap-2 mb-3"></div>
+              <div class="tab-panel active" data-panel="fields"><div id="wsFields"></div></div>
+              <div class="tab-panel" data-panel="items"><div id="wsItems"></div></div>
+              <div class="tab-panel" data-panel="compare"><div id="wsCompare"></div></div>
+              <div class="tab-panel" data-panel="json">
+                <div class="flex gap-2 mb-2"><button class="btn btn-sm" id="wsCopy"><i data-lucide="copy"></i>Copy</button><button class="btn btn-sm" id="wsDownload"><i data-lucide="download"></i>Download</button></div>
+                <pre class="code" id="wsJson"></pre>
+              </div>
             </div>
           </div>
+        </div>
+      </section>
 
-          <!-- Add Arbitrary Custom Field Input -->
-          <div class="flex items-center space-x-2 bg-[#0d0f17] p-2 rounded border border-[#20273c]">
-            <input type="text" id="customFieldKey" placeholder="Field Key (e.g. seat_number)"
-              class="bg-transparent text-xs text-white p-1 font-mono focus:outline-none flex-1" />
-            <input type="text" id="customFieldLabel" placeholder="Display Label (e.g. Seat Number)"
-              class="bg-transparent text-xs text-white p-1 font-mono focus:outline-none flex-1" />
-            <button onclick="addCustomFieldRow()"
-              class="bg-[#181d2c] hover:bg-[#20273c] border border-[#20273c] text-slate-200 text-xs px-3 py-1 rounded flex items-center space-x-1">
-              <i data-lucide="plus" class="w-3 h-3"></i>
-              <span>Add Field</span>
-            </button>
+      <!-- ============================== BATCH ============================== -->
+      <section class="page" id="page-batch">
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title"><i data-lucide="upload-cloud"></i>New batch</div>
+            <span class="card-sub">Files are processed in parallel in the background; progress below is live</span>
           </div>
-
-          <!-- Discovered Fields Table -->
-          <div class="flex-1 overflow-auto border border-[#20273c] rounded max-h-[300px]">
-            <table class="w-full text-left text-xs font-mono">
-              <thead class="bg-[#0e111a] text-slate-400 border-b border-[#20273c] sticky top-0">
-                <tr>
-                  <th class="p-2.5 w-12 text-center">Include</th>
-                  <th class="p-2.5">Field Key</th>
-                  <th class="p-2.5">Display Label</th>
-                  <th class="p-2.5">Discovered Sample Value</th>
-                  <th class="p-2.5 text-center">Type</th>
-                </tr>
-              </thead>
-              <tbody id="studioFieldsTableBody" class="divide-y divide-[#20273c] bg-[#121520]">
-                <tr>
-                  <td colspan="5" class="p-6 text-center text-slate-500 font-sans">
-                    Upload or select a document on the left and click "Scan & Auto-Discover All Fields".
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <!-- Test Extraction with Template Button -->
-          <div class="pt-2 flex items-center justify-between border-t border-[#20273c]">
-            <span id="studioSaveNotice" class="text-xs text-emerald-400 font-medium font-mono"></span>
-            <button onclick="testExtractWithTemplate()" id="btnTestTemplateExtract"
-              class="bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs px-4 py-2 rounded shadow flex items-center space-x-1.5">
-              <i data-lucide="play" class="w-3.5 h-3.5 fill-current"></i>
-              <span>Extract Document Using This Template</span>
-            </button>
-          </div>
-
-          <!-- Output Box -->
-          <div id="studioCustomOutputContainer" class="hidden space-y-2 pt-2 border-t border-[#20273c]">
-            <div class="flex items-center justify-between text-xs">
-              <span class="font-semibold text-white flex items-center space-x-1 text-emerald-400">
-                <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
-                <span>Extracted Template Data</span>
-              </span>
-              <button onclick="downloadCustomJson()" class="text-xs text-blue-400 hover:underline">Download
-                JSON</button>
-            </div>
-            <pre
-              class="bg-[#090b12] border border-[#20273c] p-3 rounded text-xs font-mono text-emerald-400 max-h-[160px] overflow-auto"><code id="studioCustomOutputCode">{}</code></pre>
-          </div>
-
-        </div>
-
-      </div>
-
-    </div>
-
-    <!-- ========================================================= -->
-    <!-- PAGE 4: EVALUATION BENCHMARK                              -->
-    <!-- ========================================================= -->
-    <div id="pageAnalytics" class="hidden space-y-4">
-
-      <div class="ent-card p-4 flex items-center justify-between">
-        <div>
-          <h2 class="text-base font-semibold text-white">Evaluation Benchmark & Field Accuracy</h2>
-          <p class="text-xs text-slate-400 mt-0.5">Automated field-by-field verification against the 10 labelled
-            ground-truth answers (`L01` through `L10`).</p>
-        </div>
-        <button onclick="triggerBenchmark()" id="btnTriggerBenchmark"
-          class="bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs px-4 py-2 rounded shadow flex items-center space-x-1.5 transition">
-          <i data-lucide="activity" class="w-3.5 h-3.5"></i>
-          <span>Run 10-Document Benchmark</span>
-        </button>
-      </div>
-
-      <!-- Metrics Row -->
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div class="ent-card p-4">
-          <div class="text-xs text-slate-400">Field Accuracy Benchmark</div>
-          <div id="benchOverallAcc" class="text-2xl font-bold font-mono text-emerald-400 mt-1">—</div>
-          <div id="benchOverallSub" class="text-[11px] text-slate-500 mt-0.5">No run yet</div>
-        </div>
-        <div class="ent-card p-4">
-          <div class="text-xs text-slate-400">Documents Fully Correct</div>
-          <div id="benchDocsCorrect" class="text-2xl font-bold font-mono text-blue-400 mt-1">—</div>
-          <div id="benchRowsSub" class="text-[11px] text-slate-500 mt-0.5">Line-item row precision / recall</div>
-        </div>
-        <div class="ent-card p-4">
-          <div class="text-xs text-slate-400">Cost per Document</div>
-          <div id="benchCost" class="text-2xl font-bold font-mono text-emerald-400 mt-1">—</div>
-          <div id="benchCostSub" class="text-[11px] text-slate-500 mt-0.5">Measured tokens × list price</div>
-        </div>
-        <div class="ent-card p-4">
-          <div class="text-xs text-slate-400">needs_review Recall</div>
-          <div id="benchReview" class="text-2xl font-bold font-mono text-indigo-400 mt-1">—</div>
-          <div id="benchReviewSub" class="text-[11px] text-slate-500 mt-0.5">Share of erroneous docs that were flagged</div>
-        </div>
-      </div>
-
-      <!-- Field Accuracy Bar Chart -->
-      <div class="ent-card p-4">
-        <div class="flex items-center justify-between mb-3">
-          <span class="text-xs font-semibold text-slate-300">Field-Level Accuracy Breakdown</span>
-          <span class="text-xs text-slate-400 font-mono">10 Document Test Suite</span>
-        </div>
-        <div class="h-64">
-          <canvas id="analyticsChart"></canvas>
-        </div>
-      </div>
-
-      <!-- Ground Truth Matrix Table -->
-      <div class="ent-card p-4 space-y-3">
-        <div class="text-xs font-semibold text-slate-300">Ground Truth Verification Matrix</div>
-        <div class="border border-[#20273c] rounded overflow-hidden">
-          <table class="w-full text-left text-xs font-mono">
-            <thead class="bg-[#0e111a] text-slate-400 border-b border-[#20273c]">
-              <tr>
-                <th class="p-2.5">Doc ID</th>
-                <th class="p-2.5">File Name</th>
-                <th class="p-2.5 text-center">is_invoice</th>
-                <th class="p-2.5 text-center">vendor</th>
-                <th class="p-2.5 text-center">inv_num</th>
-                <th class="p-2.5 text-center">date</th>
-                <th class="p-2.5 text-center">currency</th>
-                <th class="p-2.5 text-center">line_items</th>
-                <th class="p-2.5 text-center">tax_total</th>
-                <th class="p-2.5 text-center">total</th>
-              </tr>
-            </thead>
-            <tbody id="groundTruthMatrixBody" class="divide-y divide-[#20273c] bg-[#121520]">
-              <!-- Populated -->
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-    </div>
-
-    <!-- ========================================================= -->
-    <!-- PAGE 5: MCP TOOLS MANIFEST                                -->
-    <!-- ========================================================= -->
-    <div id="pageMcp" class="hidden space-y-5">
-      <div class="ent-card p-5 space-y-4">
-        <div>
-          <h2 class="text-base font-semibold text-white">Model Context Protocol (MCP) & Local Harnesses</h2>
-          <p class="text-xs text-slate-400 mt-0.5">Enables external autonomous agents to invoke invoice tools and
-            reconcile purchase orders natively.</p>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div class="bg-[#0d0f17] border border-[#20273c] p-4 rounded space-y-2">
-            <div class="flex items-center space-x-2 text-emerald-400 text-sm font-semibold">
-              <i data-lucide="shield-check" class="w-4 h-4"></i>
-              <span>Air-Gapped Privacy</span>
-            </div>
-            <p class="text-xs text-slate-400 leading-relaxed">Running local models (Ollama, Hermes 3) ensures no invoice
-              or banking data leaves the company firewall.</p>
-          </div>
-
-          <div class="bg-[#0d0f17] border border-[#20273c] p-4 rounded space-y-2">
-            <div class="flex items-center space-x-2 text-blue-400 text-sm font-semibold">
-              <i data-lucide="refresh-cw" class="w-4 h-4"></i>
-              <span>Self-Correction Reasoning</span>
-            </div>
-            <p class="text-xs text-slate-400 leading-relaxed">Agents inspect validation feedback and repair OCR noise or
-              arithmetic rounding mismatches autonomously.</p>
-          </div>
-
-          <div class="bg-[#0d0f17] border border-[#20273c] p-4 rounded space-y-2">
-            <div class="flex items-center space-x-2 text-indigo-400 text-sm font-semibold">
-              <i data-lucide="network" class="w-4 h-4"></i>
-              <span>3-Way ERP Reconciliation</span>
-            </div>
-            <p class="text-xs text-slate-400 leading-relaxed">Exposes standard MCP tool endpoints for querying purchase
-              orders and receipts in ERP systems (SAP, NetSuite).</p>
-          </div>
-        </div>
-
-        <div class="space-y-2 pt-2">
-          <div class="text-xs font-semibold text-slate-300">Exposed MCP Tools JSON-RPC Manifest
-            (<code>/api/mcp/manifest</code>)</div>
-          <pre
-            class="bg-[#090b12] border border-[#20273c] p-4 rounded text-xs font-mono text-blue-300 overflow-auto max-h-[350px]"><code id="mcpManifestBlock">Loading MCP Manifest...</code></pre>
-        </div>
-      </div>
-    </div>
-
-    <!-- ========================================================= -->
-    <!-- PAGE 6: SECURITY GOVERNANCE & API STORE                   -->
-    <!-- ========================================================= -->
-    <div id="pageSettings" class="hidden space-y-5">
-      <div class="ent-card p-5 space-y-5 max-w-4xl">
-        <div>
-          <h2 class="text-base font-semibold text-white">Security Governance & API Credentials</h2>
-          <p class="text-xs text-slate-400 mt-0.5">Manage PII redaction shield and test API keys live before writing to
-            <code class="text-slate-200">.env</code>.
-          </p>
-        </div>
-
-        <!-- PII REDACTION GOVERNANCE -->
-        <div class="space-y-3 p-4 bg-[#0d0f17] border border-[#20273c] rounded">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center space-x-2.5">
-              <div
-                class="w-7 h-7 rounded bg-emerald-950/80 border border-emerald-800 flex items-center justify-center text-emerald-400">
-                <i data-lucide="shield" class="w-4 h-4"></i>
+          <div class="card-pad grid gap-4">
+            <div class="grid gap-3" style="grid-template-columns:minmax(0,1fr) minmax(0,1fr)">
+              <div>
+                <span class="label">Extraction schema</span>
+                <select id="bSchema" class="select"><option value="">Invoice schema (8 fields, validated)</option></select>
+                <div class="hint mt-1" id="bSchemaHint">Standard invoice fields with arithmetic validation and needs_review flags.</div>
               </div>
               <div>
-                <span class="text-sm font-semibold text-white">Cloud PII Redaction & Privacy Shield</span>
-                <div class="text-[11px] text-slate-400">Sanitizes bank accounts, cards, and tax IDs before sending
-                  prompts to external AI models</div>
+                <span class="label">Schema fields</span>
+                <div id="bSchemaFields" class="flex flex-wrap gap-1.5"></div>
               </div>
             </div>
-
-            <button onclick="togglePiiShield()" id="btnPiiToggle"
-              class="bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs px-3.5 py-1.5 rounded transition">
-              Enabled
-            </button>
-          </div>
-
-          <div class="text-xs text-slate-400 space-y-1 pt-1">
-            <div class="flex items-center space-x-1.5 text-slate-300">
-              <i data-lucide="check" class="w-3.5 h-3.5 text-emerald-400"></i>
-              <span>Active Protection: Bank Accounts, Credit Cards, SSN / Aadhaar / PAN, Personal Phone Numbers,
-                Personal Emails.</span>
+            <div class="dropzone" id="bDrop">
+              <i data-lucide="files"></i>
+              <div style="font-weight:600">Drop PDFs or images here, or click to choose</div>
+              <div class="hint mt-1">PDF, JPG, PNG, WEBP, TIFF · up to 25 MB each</div>
+              <input type="file" id="bFiles" multiple accept=".pdf,.png,.jpg,.jpeg,.webp,.tif,.tiff" class="hidden">
             </div>
-            <div class="flex items-center space-x-1.5 text-slate-400">
-              <i data-lucide="info" class="w-3.5 h-3.5 text-blue-400"></i>
-              <span>External models only receive <code>[REDACTED_BANK_ACC]</code> tokens; true values are preserved
-                locally.</span>
+            <div id="bQueue" class="flex flex-wrap gap-2"></div>
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div class="flex gap-2">
+                <button class="btn btn-primary" id="bRun" disabled><i data-lucide="play"></i><span id="bRunLabel">Process 0 files</span></button>
+                <button class="btn btn-ghost" id="bClear"><i data-lucide="x"></i>Clear</button>
+              </div>
+              <button class="btn btn-sm btn-ghost" id="bSamples" title="Show the committed outputs for the 20 sample documents"><i data-lucide="folder-open"></i>Load committed sample outputs</button>
+            </div>
+            <div id="bProgressWrap" class="hidden">
+              <div class="flex justify-between text-2 mb-1.5" style="font-size:12px"><span id="bProgressText"></span><span id="bProgressPct" class="mono"></span></div>
+              <div class="progress"><div id="bProgress"></div></div>
             </div>
           </div>
         </div>
 
-        <!-- GROQ POOL (10 Keys) -->
-        <div class="space-y-3 p-4 bg-[#0d0f17] border border-[#20273c] rounded">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center space-x-2">
-              <i data-lucide="zap" class="w-4 h-4 text-amber-500"></i>
-              <span class="text-sm font-semibold text-white">Groq Cloud (10-Key Rotation Pool)</span>
-            </div>
-            <button onclick="testProvider('groq')"
-              class="bg-[#181d2c] hover:bg-[#20273c] text-xs text-slate-200 px-3 py-1 rounded border border-[#20273c] flex items-center space-x-1">
-              <i data-lucide="wifi" class="w-3 h-3 text-amber-400"></i>
-              <span>Test Connection</span>
-            </button>
-          </div>
-          <p class="text-xs text-slate-400">Free inference across 10 rotating keys (<code
-              class="text-slate-300">gsk_...</code>). System hops keys on HTTP 429 rate limit triggers.</p>
+        <div class="grid gap-4" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr))" id="bKpis"></div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
-            <div>
-              <label class="text-[11px] text-slate-400 font-mono">GROQ_API_KEY_1 (Primary)</label>
-              <input type="password" id="inputGroq1" placeholder="gsk_..."
-                class="w-full bg-[#121520] border border-[#20273c] text-xs text-white p-2 rounded mt-1 font-mono focus:border-blue-500 focus:outline-none" />
+        <div class="card">
+          <div class="card-head">
+            <div class="flex items-center gap-3">
+              <div class="card-title"><i data-lucide="table-2"></i>Results</div>
+              <div class="segmented" id="bFilter">
+                <button class="active" data-f="all">All</button><button data-f="review">Needs review</button><button data-f="error">Errors</button><button data-f="valid">Valid</button>
+              </div>
             </div>
-            <div>
-              <label class="text-[11px] text-slate-400 font-mono">GROQ_API_KEY_2 (Rotation #2)</label>
-              <input type="password" id="inputGroq2" placeholder="gsk_..."
-                class="w-full bg-[#121520] border border-[#20273c] text-xs text-white p-2 rounded mt-1 font-mono focus:border-blue-500 focus:outline-none" />
+            <div class="flex gap-2">
+              <button class="btn btn-sm" id="bExcel" disabled><i data-lucide="file-spreadsheet"></i>Excel</button>
+              <button class="btn btn-sm" id="bZip" disabled><i data-lucide="file-archive"></i>JSON .zip</button>
             </div>
           </div>
-          <div id="testStatusGroq" class="text-xs font-mono"></div>
+          <div class="table-wrap" style="max-height:640px"><table class="table"><thead id="bHead"></thead><tbody id="bBody"></tbody></table></div>
         </div>
+      </section>
 
-        <!-- GOOGLE GEMINI -->
-        <div class="space-y-3 p-4 bg-[#0d0f17] border border-[#20273c] rounded">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center space-x-2">
-              <i data-lucide="sparkles" class="w-4 h-4 text-blue-400"></i>
-              <span class="text-sm font-semibold text-white">Google Gemini API</span>
-            </div>
-            <button onclick="testProvider('gemini')"
-              class="bg-[#181d2c] hover:bg-[#20273c] text-xs text-slate-200 px-3 py-1 rounded border border-[#20273c] flex items-center space-x-1">
-              <i data-lucide="wifi" class="w-3 h-3 text-blue-400"></i>
-              <span>Test Connection</span>
-            </button>
+      <!-- ============================== TEMPLATE STUDIO ============================== -->
+      <section class="page" id="page-templates">
+        <div class="card card-pad flex flex-wrap items-center justify-between gap-3">
+          <div class="flex flex-wrap items-center gap-2">
+            <select id="tSelect" class="select" style="width:280px"></select>
+            <button class="btn" id="tNew"><i data-lucide="plus"></i>New</button>
+            <button class="btn btn-danger" id="tDelete"><i data-lucide="trash-2"></i>Delete</button>
           </div>
-          <div>
-            <label class="text-[11px] text-slate-400 font-mono">GEMINI_API_KEY</label>
-            <input type="password" id="inputGemini" placeholder="AIza..."
-              class="w-full bg-[#121520] border border-[#20273c] text-xs text-white p-2 rounded mt-1 font-mono focus:border-blue-500 focus:outline-none" />
+          <div class="flex gap-2">
+            <button class="btn" id="tUseBatch"><i data-lucide="layers"></i>Use in batch</button>
+            <button class="btn btn-primary" id="tSave"><i data-lucide="save"></i>Save template</button>
           </div>
-          <div id="testStatusGemini" class="text-xs font-mono"></div>
         </div>
+        <div class="grid gap-4" style="grid-template-columns:minmax(0,5fr) minmax(0,7fr)">
+          <div class="card">
+            <div class="card-head"><div class="card-title"><i data-lucide="file-image"></i>Sample document</div>
+              <div class="flex gap-1"><button class="btn btn-sm btn-icon" id="tZoomOut"><i data-lucide="zoom-out"></i></button><button class="btn btn-sm btn-icon" id="tZoomIn"><i data-lucide="zoom-in"></i></button></div></div>
+            <div class="card-pad grid gap-3">
+              <div class="flex gap-2">
+                <select id="tSample" class="select"></select>
+                <label class="btn" for="tUpload"><i data-lucide="upload"></i>Upload</label>
+                <input type="file" id="tUpload" accept=".pdf,.png,.jpg,.jpeg,.webp,.tif,.tiff" class="hidden">
+              </div>
+              <div class="viewer sm" id="tViewer"><div class="empty" id="tEmpty"><i data-lucide="image"></i>Choose a sample or upload a document</div><img id="tImg" class="hidden" alt="template sample"></div>
+              <button class="btn btn-primary" id="tDiscover"><i data-lucide="wand-2"></i>Auto-discover fields</button>
+              <div class="hint">With an LLM engine, the model proposes fields (label, key, type) from the page; the offline engine finds "Label: value" pairs.</div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-head"><div class="card-title"><i data-lucide="list-checks"></i>Template definition</div><span class="card-sub" id="tFieldCount"></span></div>
+            <div class="card-pad grid gap-3">
+              <div class="grid gap-3" style="grid-template-columns:1fr 1fr">
+                <div><span class="label">Name</span><input id="tName" class="input" placeholder="e.g. University hall ticket"></div>
+                <div><span class="label">Description</span><input id="tDesc" class="input" placeholder="What documents is this for?"></div>
+              </div>
+              <div class="table-wrap card" style="max-height:380px">
+                <table class="table"><thead><tr><th style="width:30px"></th><th>Key</th><th>Label</th><th>Type</th><th class="center">Req.</th><th>Sample</th><th></th></tr></thead><tbody id="tFields"></tbody></table>
+              </div>
+              <div class="flex gap-2">
+                <input id="tNewKey" class="input" placeholder="new_field_key" style="max-width:200px">
+                <input id="tNewLabel" class="input" placeholder="Label">
+                <select id="tNewType" class="select" style="max-width:130px"><option>string</option><option>number</option><option>date</option><option>boolean</option><option>table</option></select>
+                <button class="btn" id="tAdd"><i data-lucide="plus"></i>Add</button>
+              </div>
+              <div class="divider"></div>
+              <div class="flex items-center justify-between">
+                <div class="hint">Test the saved template on the selected document.</div>
+                <button class="btn" id="tTest"><i data-lucide="play"></i>Test extraction</button>
+              </div>
+              <div id="tResult"></div>
+            </div>
+          </div>
+        </div>
+      </section>
 
-        <!-- OPENAI / ANTIGRAVITY -->
-        <div class="space-y-3 p-4 bg-[#0d0f17] border border-[#20273c] rounded">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center space-x-2">
-              <i data-lucide="bot" class="w-4 h-4 text-emerald-400"></i>
-              <span class="text-sm font-semibold text-white">OpenAI / Antigravity Gateway</span>
-            </div>
-            <button onclick="testProvider('openai')"
-              class="bg-[#181d2c] hover:bg-[#20273c] text-xs text-slate-200 px-3 py-1 rounded border border-[#20273c] flex items-center space-x-1">
-              <i data-lucide="wifi" class="w-3 h-3 text-emerald-400"></i>
-              <span>Test Connection</span>
-            </button>
+      <!-- ============================== EVALUATION ============================== -->
+      <section class="page" id="page-evaluation">
+        <div class="card card-pad flex flex-wrap items-center justify-between gap-3">
+          <div class="min-w-0" style="flex:1 1 420px">
+            <div style="font-weight:600">Labelled-set evaluation (L01–L10)</div>
+            <div class="hint" id="evMeta">Same harness as <span class="mono">python scripts/eval.py</span></div>
           </div>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div>
-              <label class="text-[11px] text-slate-400 font-mono">OPENAI_API_KEY</label>
-              <input type="password" id="inputOpenAI" placeholder="sk-..."
-                class="w-full bg-[#121520] border border-[#20273c] text-xs text-white p-2 rounded mt-1 font-mono focus:border-blue-500 focus:outline-none" />
-            </div>
-            <div>
-              <label class="text-[11px] text-slate-400 font-mono">OPENAI_BASE_URL (Optional Gateway)</label>
-              <input type="text" id="inputOpenAIBase" placeholder="https://api.openai.com/v1"
-                class="w-full bg-[#121520] border border-[#20273c] text-xs text-white p-2 rounded mt-1 font-mono focus:border-blue-500 focus:outline-none" />
-            </div>
+          <div class="flex items-center gap-3">
+            <label class="flex items-center gap-2 text-2" style="font-size:12px"><span class="switch"><input type="checkbox" id="evCache" checked><span></span></span>Reuse cached results</label>
+            <button class="btn btn-primary" id="evRun"><i data-lucide="play"></i>Run evaluation</button>
           </div>
-          <div id="testStatusOpenAI" class="text-xs font-mono"></div>
         </div>
+        <div id="evBanner"></div>
+        <div class="grid gap-4" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))" id="evKpis"></div>
+        <div class="grid gap-4" style="grid-template-columns:minmax(0,3fr) minmax(0,2fr)">
+          <div class="card"><div class="card-head"><div class="card-title"><i data-lucide="bar-chart-3"></i>Field-level accuracy</div></div>
+            <div class="card-pad"><div style="height:280px"><canvas id="evChart"></canvas></div></div></div>
+          <div class="card"><div class="card-head"><div class="card-title"><i data-lucide="flag"></i>Does needs_review catch the errors?</div></div>
+            <div class="card-pad" id="evReview"></div></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><div class="card-title"><i data-lucide="grid-3x3"></i>Per-document matrix</div><span class="card-sub">Click a row to compare prediction and ground truth</span></div>
+          <div class="table-wrap"><table class="table"><thead><tr><th>Doc</th><th class="center">Inv</th><th class="center">Vendor</th><th class="center">Number</th><th class="center">Date</th><th class="center">Curr</th><th class="center">Items</th><th class="center">Tax</th><th class="center">Total</th><th class="center">Review</th><th class="num">Tokens in/out</th><th class="num">Cost</th><th class="num">Sec</th></tr></thead><tbody id="evMatrix"></tbody></table></div>
+        </div>
+        <div class="grid gap-4" style="grid-template-columns:minmax(0,1fr) minmax(0,1fr)">
+          <div class="card"><div class="card-head"><div class="card-title"><i data-lucide="bug"></i>Errors grouped by cause</div></div><div id="evErrors"></div></div>
+          <div class="card"><div class="card-head"><div class="card-title"><i data-lucide="coins"></i>Cost method</div></div><div class="card-pad" id="evCost"></div></div>
+        </div>
+        <div class="card"><div class="card-head"><div class="card-title"><i data-lucide="ruler"></i>Matching rules</div><span class="card-sub">eval/metrics.py</span></div>
+          <div class="card-pad"><pre class="code" style="max-height:none">is_invoice       exact boolean
+vendor           case/punctuation-insensitive, legal suffixes canonicalised (Pvt Ltd = Private Limited, Ltd = Limited, Co = Company)
+                 equal canonical names, or fuzz.ratio >= 90. No subset matching ("Acme" != "Acme Holdings Global")
+invoice_number   exact after trimming whitespace and upper-casing
+invoice_date     exact ISO YYYY-MM-DD
+currency         exact ISO-4217 code (case-insensitive)
+tax_total/total  |pred - gt| <= 0.01 after parsing ("1,200.00" == 1200)
+line_items       strict: same row count, in order; description fuzz >= 80, quantity equal or both null, amount within 0.01
+                 (row-level precision/recall reported separately)
+both null        counts as a match (non-invoices)</pre></div></div>
+      </section>
 
-        <!-- LOCAL LLM -->
-        <div class="space-y-3 p-4 bg-[#0d0f17] border border-[#20273c] rounded">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center space-x-2">
-              <i data-lucide="server" class="w-4 h-4 text-indigo-400"></i>
-              <span class="text-sm font-semibold text-white">Local LLM Endpoint (Ollama / Hermes 3)</span>
+      <!-- ============================== MCP ============================== -->
+      <section class="page" id="page-mcp">
+        <div class="grid gap-4" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))" id="mcpKpis"></div>
+        <div class="grid gap-4" style="grid-template-columns:minmax(0,1fr) minmax(0,1fr)">
+          <div class="card">
+            <div class="card-head"><div class="card-title"><i data-lucide="plug-zap"></i>Connect a client</div><span class="card-sub">Paths are this machine's</span></div>
+            <div class="tabs" id="mcpClientTabs">
+              <button class="tab active" data-client="claude_code">Claude Code</button>
+              <button class="tab" data-client="claude_desktop">Claude Desktop</button>
+              <button class="tab" data-client="cursor">Cursor</button>
+              <button class="tab" data-client="inspector">MCP Inspector</button>
             </div>
-            <button onclick="testProvider('local')"
-              class="bg-[#181d2c] hover:bg-[#20273c] text-xs text-slate-200 px-3 py-1 rounded border border-[#20273c] flex items-center space-x-1">
-              <i data-lucide="wifi" class="w-3 h-3 text-indigo-400"></i>
-              <span>Test Connection</span>
-            </button>
-          </div>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div>
-              <label class="text-[11px] text-slate-400 font-mono">LOCAL_LLM_BASE_URL</label>
-              <input type="text" id="inputLocalUrl" value="http://localhost:11434/v1"
-                class="w-full bg-[#121520] border border-[#20273c] text-xs text-white p-2 rounded mt-1 font-mono focus:border-blue-500 focus:outline-none" />
-            </div>
-            <div>
-              <label class="text-[11px] text-slate-400 font-mono">LOCAL_LLM_MODEL</label>
-              <input type="text" id="inputLocalModel" value="qwen2.5-vl:7b"
-                class="w-full bg-[#121520] border border-[#20273c] text-xs text-white p-2 rounded mt-1 font-mono focus:border-blue-500 focus:outline-none" />
+            <div class="card-pad grid gap-2">
+              <div class="hint" id="mcpClientHint"></div>
+              <div class="code-wrap"><button class="btn btn-sm copy" id="mcpCopy"><i data-lucide="copy"></i>Copy</button><pre class="code" id="mcpConfig">Loading…</pre></div>
             </div>
           </div>
-          <div id="testStatusLocal" class="text-xs font-mono"></div>
+          <div class="card">
+            <div class="card-head"><div class="card-title"><i data-lucide="wrench"></i>Tools exposed</div><span class="card-sub" id="mcpToolCount"></span></div>
+            <div id="mcpTools" class="card-pad grid gap-2" style="max-height:420px;overflow:auto"></div>
+          </div>
         </div>
+        <div class="card">
+          <div class="card-head"><div class="card-title"><i data-lucide="terminal-square"></i>Tool playground</div><span class="card-sub">Runs the exact function an MCP client calls (POST /api/mcp/call)</span></div>
+          <div class="card-pad grid gap-4" style="grid-template-columns:minmax(0,2fr) minmax(0,3fr)">
+            <div class="grid gap-3 content-start">
+              <div><span class="label">Tool</span><select id="mcpTool" class="select"></select></div>
+              <div class="hint" id="mcpToolDesc"></div>
+              <div id="mcpForm" class="grid gap-3"></div>
+              <div class="flex gap-2"><button class="btn btn-primary" id="mcpRun"><i data-lucide="play"></i>Call tool</button><button class="btn btn-ghost" id="mcpCurl"><i data-lucide="terminal"></i>Copy as curl</button></div>
+            </div>
+            <div>
+              <div class="flex items-center justify-between mb-2"><span class="label" style="margin:0">Result</span><span class="hint" id="mcpElapsed"></span></div>
+              <pre class="code" id="mcpResult" style="min-height:260px">Pick a tool and call it.</pre>
+            </div>
+          </div>
+        </div>
+      </section>
 
-        <div class="pt-2 flex items-center justify-between">
-          <div id="saveSuccessNotice" class="text-xs text-emerald-400 font-medium"></div>
-          <button onclick="saveAllKeys()"
-            class="bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs px-5 py-2 rounded shadow transition">
-            Save Settings to .env
-          </button>
+      <!-- ============================== SETTINGS ============================== -->
+      <section class="page" id="page-settings">
+        <div class="grid gap-4" style="grid-template-columns:minmax(0,3fr) minmax(0,2fr)">
+          <div class="grid gap-4 content-start">
+            <div class="card">
+              <div class="card-head"><div class="card-title"><i data-lucide="cpu"></i>Default backend</div><span class="card-sub">Written to .env as AI_MODE</span></div>
+              <div class="card-pad flex items-end gap-2">
+                <div class="flex-1"><span class="label">AI_MODE</span><select id="sMode" class="select"></select></div>
+                <button class="btn btn-primary" id="sSaveMode"><i data-lucide="save"></i>Save</button>
+              </div>
+            </div>
+            <div id="sProviders" class="grid gap-4"></div>
+          </div>
+          <div class="grid gap-4 content-start">
+            <div class="card">
+              <div class="card-head"><div class="card-title"><i data-lucide="shield"></i>PII shield</div><label class="switch"><input type="checkbox" id="sPii"><span></span></label></div>
+              <div class="card-pad grid gap-2">
+                <div class="hint" id="sPiiInfo"></div>
+                <span class="label mt-2">Try the redactor</span>
+                <textarea id="sPiiText" class="textarea" placeholder="Paste text containing an IBAN, card number, email or phone number…"></textarea>
+                <button class="btn" id="sPiiScan"><i data-lucide="scan-eye"></i>Scan text</button>
+                <pre class="code hidden" id="sPiiOut"></pre>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-head"><div class="card-title"><i data-lucide="sliders-horizontal"></i>Runtime</div></div>
+              <div class="card-pad" id="sRuntime"></div>
+            </div>
+          </div>
         </div>
-      </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<!-- shared overlays -->
+<div class="overlay" id="overlay"></div>
+<aside class="drawer" id="drawer" aria-label="Result preview">
+  <div class="drawer-head">
+    <div class="min-w-0">
+      <div class="flex items-center gap-2"><div style="font-weight:650;font-size:15px" class="truncate-1" id="drawerTitle"></div><div id="drawerBadges"></div></div>
+      <div id="drawerSub" class="hint"></div>
     </div>
-
-  </main>
-
-  <!-- JAVASCRIPT LOGIC -->
-  <script>
-    let currentDocId = "L01";
-    let currentDocData = null;
-    let currentZoom = 1.0;
-    let studioZoom = 1.0;
-    let analyticsChartInstance = null;
-    let queuedBatchFiles = [];
-    let processedBatchRecords = [];
-    let piiShieldActive = true;
-    let currentStudioFields = [];
-    let studioSelectedFile = null;
-
-    window.addEventListener("DOMContentLoaded", async () => {
-      lucide.createIcons();
-      try {
-        const h = await (await fetch("/health")).json();
-        const sel = document.getElementById("headerModeSelect");
-        if (h.active_mode && [...sel.options].some(o => o.value === h.active_mode)) sel.value = h.active_mode;
-      } catch (e) { /* keep first option */ }
-      await loadDocumentList();
-      await loadSelectedDocument();
-      initAnalyticsChart();
-      loadLatestBenchmark();
-      loadMcpManifest();
-      initWorkspaceDragAndDrop();
-      initBatchDragAndDrop();
-      loadSavedTemplates();
-      fetchPiiStatus();
-      updateBatchUI();
-    });
-
-    // Navigation Switcher
-    function navigatePage(pageId) {
-      const pages = ['workspace', 'batch', 'templates', 'analytics', 'mcp', 'settings'];
-      pages.forEach(p => {
-        const el = document.getElementById(`page${p.charAt(0).toUpperCase() + p.slice(1)}`);
-        const nav = document.getElementById(`nav${p.charAt(0).toUpperCase() + p.slice(1)}`);
-        if (p === pageId) {
-          el.classList.remove('hidden');
-          nav.classList.add('active');
-        } else {
-          el.classList.add('hidden');
-          nav.classList.remove('active');
-        }
-      });
-      lucide.createIcons();
-      if (pageId === 'analytics') triggerBenchmark();
-      if (pageId === 'settings') loadKeysConfig();
-    }
-
-    // -------------------------------------------------------------
-    // 1. WORKSPACE LOGIC
-    // -------------------------------------------------------------
-    async function loadDocumentList() {
-      try {
-        const res = await fetch("/api/documents");
-        const json = await res.json();
-        const select = document.getElementById("docSelect");
-        select.innerHTML = "";
-
-        const grpLabelled = document.createElement("optgroup");
-        grpLabelled.label = "Labelled (L01 - L10)";
-        const grpUnlabelled = document.createElement("optgroup");
-        grpUnlabelled.label = "Unlabelled (U01 - U10)";
-
-        json.documents.forEach(d => {
-          const opt = document.createElement("option");
-          opt.value = d.id;
-          opt.textContent = `${d.id} — ${d.filename} (${d.file_type})`;
-          if (d.category === "labelled") grpLabelled.appendChild(opt);
-          else grpUnlabelled.appendChild(opt);
-        });
-
-        select.appendChild(grpLabelled);
-        select.appendChild(grpUnlabelled);
-        select.value = "L01";
-      } catch (e) {
-        console.error("Failed to load documents list:", e);
-      }
-    }
-
-    async function loadSelectedDocument() {
-      currentDocId = document.getElementById("docSelect").value;
-      const img = document.getElementById("docPreviewImg");
-      img.src = `/api/documents/${currentDocId}/preview?t=${Date.now()}`;
-      zoomReset();
-
-      document.getElementById("viewerFilename").textContent = `${currentDocId}`;
-
-      try {
-        const outRes = await fetch(`/api/documents/${currentDocId}/output`);
-        const outJson = await outRes.json();
-        if (outJson.exists && outJson.data) {
-          currentDocData = outJson.data;
-          renderData(currentDocData, { saved: true });
-        } else {
-          await extractCurrentDocument();
-        }
-      } catch (e) {
-        console.error("Error loading document:", e);
-      }
-    }
-
-    async function extractCurrentDocument() {
-      const mode = document.getElementById("headerModeSelect").value;
-      const btn = document.getElementById("btnExtract");
-      btn.innerHTML = `<i data-lucide="loader" class="w-3.5 h-3.5 animate-spin"></i><span>Extracting...</span>`;
-
-      try {
-        const res = await fetch(`/api/extract/${currentDocId}?mode=${mode}`, { method: "POST" });
-        const json = await res.json();
-        if (!res.ok) throw new Error(json.detail || `HTTP ${res.status}`);
-        if (json.error) throw new Error(`${json.error_type}: ${json.error}`);
-        currentDocData = json.data;
-        renderData(currentDocData, json);
-      } catch (e) {
-        alert("Extraction error: " + e.message);
-      } finally {
-        btn.innerHTML = `<i data-lucide="play" class="w-3.5 h-3.5 fill-current"></i><span>Extract & Validate</span>`;
-        lucide.createIcons();
-      }
-    }
-
-    function renderData(data, meta = {}) {
-      if (!data) return;
-
-      const isInv = data.is_invoice;
-      const bannerNonInv = document.getElementById("bannerNonInvoice");
-      const bannerVal = document.getElementById("bannerValidation");
-      const valText = document.getElementById("validationText");
-
-      if (!isInv) {
-        bannerNonInv.classList.remove("hidden");
-        bannerVal.classList.add("hidden");
-      } else {
-        bannerNonInv.classList.add("hidden");
-        bannerVal.classList.remove("hidden");
-        const wrap = document.getElementById("validationTextWrap");
-        if (meta.saved) {
-          valText.textContent = "Saved output from the last CLI run (outputs/). Click Extract to re-validate.";
-          wrap.className = "flex items-center space-x-2 text-slate-300";
-        } else if (meta.needs_review) {
-          valText.textContent = "Needs review: " + (meta.review_reasons || []).join(" | ");
-          wrap.className = "flex items-center space-x-2 text-amber-300";
-        } else {
-          const calls = meta.cost ? ` - ${meta.cost.calls} call(s), ${meta.cost.tokens_in}/${meta.cost.tokens_out} tokens` : "";
-          valText.textContent = `Schema valid & arithmetic balanced (${meta.mode || ""})${calls}`;
-          wrap.className = "flex items-center space-x-2 text-emerald-300";
-        }
-      }
-
-      document.getElementById("fldVendor").textContent = data.vendor || "—";
-      document.getElementById("fldInvNum").textContent = data.invoice_number || "—";
-      document.getElementById("fldDate").textContent = data.invoice_date || "—";
-      document.getElementById("fldCurrency").textContent = data.currency || "—";
-      document.getElementById("fldTax").textContent = data.tax_total !== null && data.tax_total !== undefined ? `${data.currency || ''} ${data.tax_total.toFixed(2)}` : "—";
-      document.getElementById("fldTotal").textContent = data.total !== null && data.total !== undefined ? `${data.currency || ''} ${data.total.toFixed(2)}` : "—";
-
-      const items = data.line_items || [];
-      document.getElementById("tabItemCountBadge").textContent = items.length;
-
-      let qHtml = "";
-      let fHtml = "";
-      let lineSum = 0;
-
-      items.forEach((item, idx) => {
-        lineSum += (item.amount || 0);
-        const qtyStr = item.quantity !== null && item.quantity !== undefined ? item.quantity : "<span class='text-slate-500'>null</span>";
-        const amtStr = item.amount.toFixed(2);
-
-        if (idx < 3) {
-          qHtml += `<tr>
-            <td class="p-2.5 text-slate-300 truncate max-w-[200px]">${item.description}</td>
-            <td class="p-2.5 text-right text-slate-400">${qtyStr}</td>
-            <td class="p-2.5 text-right text-white font-bold">${amtStr}</td>
-          </tr>`;
-        }
-
-        fHtml += `<tr class="hover:bg-[#1a2032]">
-          <td class="p-2.5 text-slate-500">${idx + 1}</td>
-          <td class="p-2.5 text-slate-200 font-medium">${item.description}</td>
-          <td class="p-2.5 text-right text-slate-400">${qtyStr}</td>
-          <td class="p-2.5 text-right font-bold ${item.amount < 0 ? 'text-rose-400' : 'text-emerald-400'}">${amtStr}</td>
-        </tr>`;
-      });
-
-      if (!items.length) {
-        qHtml = `<tr><td colspan="3" class="p-3 text-center text-slate-500 font-mono">No line items (non-invoice or empty table)</td></tr>`;
-        fHtml = `<tr><td colspan="4" class="p-4 text-center text-slate-500 font-mono">No line items found.</td></tr>`;
-      }
-
-      document.getElementById("quickItemsBody").innerHTML = qHtml;
-      document.getElementById("fullItemsBody").innerHTML = fHtml;
-
-      const tax = data.tax_total || 0;
-      const total = data.total || 0;
-      const diff = Math.abs((lineSum + tax) - total);
-      const mathDiffBadge = document.getElementById("mathDiffBadge");
-      mathDiffBadge.textContent = isInv ? `DIFF ±${diff.toFixed(2)}` : "N/A";
-
-      document.getElementById("rawJsonCode").textContent = JSON.stringify(data, null, 2);
-    }
-
-    function switchRightTab(tab) {
-      ['fields', 'items', 'json'].forEach(t => {
-        const el = document.getElementById(`view${t.charAt(0).toUpperCase() + t.slice(1)}`);
-        const btn = document.getElementById(`tabBtn${t.charAt(0).toUpperCase() + t.slice(1)}`);
-        if (t === tab) {
-          el.classList.remove('hidden');
-          btn.className = "px-3 py-1 rounded bg-[#1c2236] text-white font-medium";
-        } else {
-          el.classList.add('hidden');
-          btn.className = "px-3 py-1 rounded text-slate-400 hover:text-white";
-        }
-      });
-    }
-
-    function initWorkspaceDragAndDrop() {
-      const dropZone = document.getElementById("docViewerContainer");
-      const overlay = document.getElementById("dropOverlay");
-      if (!dropZone || !overlay) return;
-
-      ['dragenter', 'dragover'].forEach(eventName => {
-        dropZone.addEventListener(eventName, (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          overlay.classList.remove('hidden');
-        }, false);
-      });
-
-      ['dragleave', 'drop'].forEach(eventName => {
-        dropZone.addEventListener(eventName, (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          overlay.classList.add('hidden');
-        }, false);
-      });
-
-      dropZone.addEventListener('drop', (e) => {
-        const dt = e.dataTransfer;
-        const files = dt.files;
-        if (files && files.length > 0) {
-          processSingleUploadedFile(files[0]);
-        }
-      }, false);
-    }
-
-    async function handleSingleFileUpload(event) {
-      const file = event.target.files[0];
-      if (file) await processSingleUploadedFile(file);
-    }
-
-    async function processSingleUploadedFile(file) {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("mode", document.getElementById("headerModeSelect").value);
-
-      const btn = document.getElementById("btnExtract");
-      btn.innerHTML = `<i data-lucide="loader" class="w-3.5 h-3.5 animate-spin"></i><span>Processing...</span>`;
-
-      try {
-        const res = await fetch("/api/upload-and-extract", { method: "POST", body: formData });
-        const json = await res.json();
-        currentDocId = json.doc_id;
-
-        const select = document.getElementById("docSelect");
-        const opt = document.createElement("option");
-        opt.value = json.doc_id;
-        opt.textContent = `${json.doc_id} — ${json.filename} (CUSTOM)`;
-        select.prepend(opt);
-        select.value = json.doc_id;
-
-        if (!res.ok) throw new Error(json.detail || `HTTP ${res.status}`);
-        if (json.error) throw new Error(`${json.error_type}: ${json.error}`);
-        document.getElementById("viewerFilename").textContent = json.filename;
-        document.getElementById("docPreviewImg").src = `/api/documents/${json.doc_id}/preview?t=${Date.now()}`;
-        currentDocData = json.data;
-        renderData(currentDocData, json);
-      } catch (e) {
-        alert("Upload error: " + e.message);
-      } finally {
-        btn.innerHTML = `<i data-lucide="play" class="w-3.5 h-3.5 fill-current"></i><span>Extract & Validate</span>`;
-        lucide.createIcons();
-      }
-    }
-
-    function copyJson() {
-      const text = document.getElementById("rawJsonCode").textContent;
-      navigator.clipboard.writeText(text);
-      alert("JSON copied to clipboard!");
-    }
-
-    function downloadDocumentJson() {
-      if (!currentDocData) return;
-      const blob = new Blob([JSON.stringify(currentDocData, null, 2)], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${currentDocId}.json`;
-      a.click();
-    }
-
-    function zoom(f) {
-      currentZoom = Math.min(2.5, Math.max(0.5, currentZoom * f));
-      document.getElementById("docPreviewImg").style.transform = `scale(${currentZoom})`;
-    }
-    function zoomReset() {
-      currentZoom = 1.0;
-      document.getElementById("docPreviewImg").style.transform = "scale(1)";
-    }
-
-    // -------------------------------------------------------------
-    // 2. BATCH INGESTION (PROCESSED UPLOADS ONLY!)
-    // -------------------------------------------------------------
-    function initBatchDragAndDrop() {
-      const dropZone = document.getElementById("batchDropZone");
-      if (!dropZone) return;
-
-      ['dragenter', 'dragover'].forEach(name => {
-        dropZone.addEventListener(name, (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          dropZone.classList.add("border-blue-500", "bg-blue-950/20");
-        }, false);
-      });
-
-      ['dragleave', 'drop'].forEach(name => {
-        dropZone.addEventListener(name, (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          dropZone.classList.remove("border-blue-500", "bg-blue-950/20");
-        }, false);
-      });
-
-      dropZone.addEventListener('drop', (e) => {
-        const dt = e.dataTransfer;
-        if (dt.files && dt.files.length > 0) {
-          queueBatchFiles(dt.files);
-        }
-      }, false);
-    }
-
-    function handleBatchFilesSelected(e) {
-      if (e.target.files && e.target.files.length > 0) {
-        queueBatchFiles(e.target.files);
-      }
-    }
-
-    function queueBatchFiles(fileList) {
-      for (let i = 0; i < fileList.length; i++) {
-        queuedBatchFiles.push(fileList[i]);
-      }
-      renderBatchQueuedChips();
-      updateBatchUI();
-    }
-
-    function renderBatchQueuedChips() {
-      const area = document.getElementById("batchQueuedFilesArea");
-      const chips = document.getElementById("batchFileChips");
-      const count = document.getElementById("batchQueuedCount");
-
-      if (queuedBatchFiles.length === 0) {
-        area.classList.add("hidden");
-        return;
-      }
-
-      area.classList.remove("hidden");
-      count.textContent = queuedBatchFiles.length;
-
-      let html = "";
-      queuedBatchFiles.forEach((f, idx) => {
-        const sizeKb = (f.size / 1024).toFixed(1);
-        html += `<div class="flex items-center space-x-1.5 bg-[#181d2c] border border-[#20273c] px-2.5 py-1 rounded text-xs">
-          <i data-lucide="file" class="w-3 h-3 text-blue-400"></i>
-          <span class="text-slate-200 font-mono">${f.name}</span>
-          <span class="text-slate-500 text-[10px]">(${sizeKb} KB)</span>
-          <button onclick="removeQueuedBatchFile(${idx})" class="text-rose-400 hover:text-rose-300 ml-1">&times;</button>
-        </div>`;
-      });
-      chips.innerHTML = html;
-      lucide.createIcons();
-    }
-
-    function removeQueuedBatchFile(idx) {
-      queuedBatchFiles.splice(idx, 1);
-      renderBatchQueuedChips();
-      updateBatchUI();
-    }
-
-    function clearBatchQueue() {
-      queuedBatchFiles = [];
-      renderBatchQueuedChips();
-      updateBatchUI();
-    }
-
-    function updateBatchUI() {
-      const btn = document.getElementById("btnExecuteBatch");
-      const label = document.getElementById("btnExecuteBatchLabel");
-      const btnExcel = document.getElementById("btnBatchExcel");
-      const btnZip = document.getElementById("btnBatchZip");
-
-      const hasQueue = queuedBatchFiles.length > 0;
-      const hasProcessed = processedBatchRecords.length > 0;
-
-      label.textContent = hasQueue ? `Process Uploaded Batch (${queuedBatchFiles.length} Files)` : "Process Batch (0 Files)";
-      btn.disabled = !hasQueue;
-      btnExcel.disabled = !hasProcessed;
-      btnZip.disabled = !hasProcessed;
-    }
-
-    // STRICTLY EXECUTE ONLY FOR UPLOADED FILES!
-    async function executeUploadedBatch() {
-      if (queuedBatchFiles.length === 0) {
-        alert("Please select or drop files above to process.");
-        return;
-      }
-
-      const btn = document.getElementById("btnExecuteBatch");
-      const progContainer = document.getElementById("batchProgressContainer");
-      const progBar = document.getElementById("batchProgressBar");
-      const progPercent = document.getElementById("batchProgressPercent");
-      const progStatus = document.getElementById("batchProgressStatus");
-
-      btn.disabled = true;
-      progContainer.classList.remove("hidden");
-      const setProgress = (done, total, text) => {
-        const pct = total ? Math.round((done / total) * 100) : 0;
-        progBar.style.width = `${pct}%`;
-        progPercent.textContent = `${pct}%`;
-        progStatus.textContent = text;
-      };
-      setProgress(0, queuedBatchFiles.length, `Uploading ${queuedBatchFiles.length} files...`);
-
-      const formData = new FormData();
-      queuedBatchFiles.forEach(f => formData.append("files", f));
-      formData.append("mode", document.getElementById("headerModeSelect").value);
-
-      try {
-        // Job-based: the server returns immediately and processes in the background.
-        const res = await fetch("/api/batch/jobs", { method: "POST", body: formData });
-        if (!res.ok) {
-          const errText = await res.text();
-          throw new Error(`Server returned ${res.status}: ${errText}`);
-        }
-        const { job_id, total } = await res.json();
-        clearBatchQueue();
-
-        let job = null;
-        while (true) {
-          await new Promise(r => setTimeout(r, 1000));
-          const jr = await fetch(`/api/batch/jobs/${job_id}`);
-          if (!jr.ok) throw new Error(`Job poll failed (${jr.status})`);
-          job = await jr.json();
-          processedBatchRecords = job.results || [];
-          renderBatchLedgerTable();
-          const last = job.last_file ? ` - last: ${job.last_file}` : "";
-          setProgress(job.done, job.total || total,
-            `Processed ${job.done}/${job.total || total} documents (${job.elapsed_s}s)${last}`);
-          if (job.status === "completed" || job.status === "failed") break;
-        }
-
-        if (job.status === "failed") throw new Error(job.error || "Batch job failed");
-        const flagged = processedBatchRecords.filter(r => r.needs_review || r.error).length;
-        setProgress(job.total, job.total,
-          `Batch complete: ${job.total} documents in ${job.elapsed_s}s - ${flagged} need review.`);
-      } catch (e) {
-        alert("Batch error: " + e.message);
-      } finally {
-        btn.disabled = false;
-        updateBatchUI();
-      }
-    }
-
-    function escapeHtml(s) {
-      return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-    }
-
-    function batchStatusBadge(r) {
-      if (r.error) {
-        return `<span title="${escapeHtml(r.error)}" class="bg-rose-950/80 text-rose-300 border border-rose-800 text-[10px] px-2 py-0.5 rounded font-bold">ERROR</span>`;
-      }
-      if (r.needs_review) {
-        const why = escapeHtml((r.review_reasons || []).join("; "));
-        return `<span title="${why}" class="bg-amber-950/80 text-amber-300 border border-amber-800 text-[10px] px-2 py-0.5 rounded font-bold">NEEDS REVIEW</span>`;
-      }
-      if (r.needs_review === undefined) {
-        return `<span class="text-slate-500 text-[10px]">saved output</span>`;
-      }
-      return `<span class="bg-emerald-950/80 text-emerald-300 border border-emerald-800 text-[10px] px-2 py-0.5 rounded font-bold">VALID</span>`;
-    }
-
-    function renderBatchLedgerTable() {
-      const tbody = document.getElementById("batchTableBody");
-      const label = document.getElementById("batchLedgerCountLabel");
-      label.textContent = `(${processedBatchRecords.length} Documents Processed)`;
-
-      if (processedBatchRecords.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="9" class="p-8 text-center text-slate-500 font-sans">No batch documents processed yet. Drag & drop files above to extract.</td></tr>`;
-        return;
-      }
-
-      let html = "";
-      processedBatchRecords.forEach(r => {
-        const isInv = r.is_invoice;
-        const isInvBadge = isInv ? `<span class="text-emerald-400 font-bold">YES</span>` : `<span class="text-sky-400 font-bold">NO</span>`;
-        const totStr = r.total !== null && r.total !== undefined ? `${r.currency || ''} ${Number(r.total).toFixed(2)}` : "—";
-        const taxStr = r.tax_total !== null && r.tax_total !== undefined ? `${r.currency || ''} ${Number(r.tax_total).toFixed(2)}` : "—";
-
-        html += `<tr class="hover:bg-[#181d2c] transition-colors">
-          <td class="p-3 font-bold text-blue-400">${r.doc_id}</td>
-          <td class="p-3 text-slate-300">${r.filename}</td>
-          <td class="p-3 text-center">${isInvBadge}</td>
-          <td class="p-3 text-slate-200 truncate max-w-[180px]">${r.vendor || "—"}</td>
-          <td class="p-3 text-slate-300 font-mono">${r.invoice_number || "—"}</td>
-          <td class="p-3 text-slate-300 font-mono">${r.invoice_date || "—"}</td>
-          <td class="p-3 text-right font-mono text-slate-400">${taxStr}</td>
-          <td class="p-3 text-right font-mono font-bold text-white">${totStr}</td>
-          <td class="p-3 text-center">${batchStatusBadge(r)}</td>
-        </tr>`;
-      });
-
-      tbody.innerHTML = html;
-      updateBatchUI();
-    }
-
-    // Optional loader for testing system 20 docs
-    async function loadSystemSamplesIntoBatch() {
-      const res = await fetch("/api/documents");
-      const json = await res.json();
-      const records = [];
-
-      for (const d of json.documents) {
-        const outRes = await fetch(`/api/documents/${d.id}/output`);
-        const outJson = await outRes.json();
-        const p = outJson.data || {};
-        records.push({
-          doc_id: d.id,
-          filename: d.filename,
-          is_invoice: p.is_invoice,
-          vendor: p.vendor,
-          invoice_number: p.invoice_number,
-          invoice_date: p.invoice_date,
-          currency: p.currency,
-          tax_total: p.tax_total,
-          total: p.total,
-          data: p
-        });
-      }
-      processedBatchRecords = records;
-      renderBatchLedgerTable();
-    }
-
-    async function exportBatchExcel() {
-      if (!processedBatchRecords.length) return;
-      const res = await fetch("/api/batch/export-excel", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ records: processedBatchRecords })
-      });
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `Batch_Invoices_${Date.now()}.xlsx`;
-      a.click();
-    }
-
-    async function exportBatchZip() {
-      if (!processedBatchRecords.length) return;
-      const res = await fetch("/api/batch/export-zip", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ records: processedBatchRecords })
-      });
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `Batch_JSON_${Date.now()}.zip`;
-      a.click();
-    }
-
-    // -------------------------------------------------------------
-    // 3. TEMPLATE STUDIO (WITH LIVE IMAGE PREVIEW & SCAN)
-    // -------------------------------------------------------------
-    async function handleStudioDocUpload(e) {
-      if (e.target.files && e.target.files[0]) {
-        studioSelectedFile = e.target.files[0];
-        document.getElementById("studioSampleSelect").value = "";
-
-        const img = document.getElementById("studioPreviewImg");
-        const placeholder = document.getElementById("studioNoPreviewNotice");
-
-        // Native fast instant preview for image files!
-        if (studioSelectedFile.type.startsWith("image/")) {
-          img.src = URL.createObjectURL(studioSelectedFile);
-          img.classList.remove("hidden");
-          placeholder.classList.add("hidden");
-          zoomStudioReset();
-        } else {
-          // For PDF, fetch server rendered preview
-          const formData = new FormData();
-          formData.append("file", studioSelectedFile);
-          try {
-            const res = await fetch("/api/preview-file", { method: "POST", body: formData });
-            const blob = await res.blob();
-            img.src = URL.createObjectURL(blob);
-            img.classList.remove("hidden");
-            placeholder.classList.add("hidden");
-            zoomStudioReset();
-          } catch (err) {
-            console.error("Preview render failed:", err);
-          }
-        }
-      }
-    }
-
-    function onStudioSampleSelectChange() {
-      const sampleId = document.getElementById("studioSampleSelect").value;
-      if (!sampleId) return;
-
-      studioSelectedFile = null;
-      document.getElementById("studioDocInput").value = "";
-
-      const img = document.getElementById("studioPreviewImg");
-      const placeholder = document.getElementById("studioNoPreviewNotice");
-
-      img.src = `/api/documents/${sampleId}/preview?t=${Date.now()}`;
-      img.classList.remove("hidden");
-      placeholder.classList.add("hidden");
-      zoomStudioReset();
-    }
-
-    function zoomStudio(f) {
-      studioZoom = Math.min(2.5, Math.max(0.5, studioZoom * f));
-      document.getElementById("studioPreviewImg").style.transform = `scale(${studioZoom})`;
-    }
-    function zoomStudioReset() {
-      studioZoom = 1.0;
-      document.getElementById("studioPreviewImg").style.transform = "scale(1)";
-    }
-
-    async function triggerDiscovery() {
-      const sampleId = document.getElementById("studioSampleSelect").value;
-      if (!studioSelectedFile && !sampleId) {
-        alert("Please upload a document or choose a sample on the left first.");
-        return;
-      }
-
-      const btn = document.getElementById("btnDiscoverFields");
-      btn.innerHTML = `<i data-lucide="loader" class="w-4 h-4 animate-spin"></i><span>Scanning & Auto-Discovering Fields...</span>`;
-
-      const formData = new FormData();
-      if (studioSelectedFile) formData.append("file", studioSelectedFile);
-      if (sampleId) formData.append("doc_id", sampleId);
-      formData.append("mode", document.getElementById("headerModeSelect").value);
-
-      try {
-        const res = await fetch("/api/templates/discover", { method: "POST", body: formData });
-        const json = await res.json();
-        if (!res.ok) throw new Error(json.detail || `HTTP ${res.status}`);
-        if (json.warning) alert(json.warning);
-
-        currentStudioFields = json.discovered_fields || [];
-        renderStudioFieldsTable();
-      } catch (e) {
-        alert("Discovery error: " + e.message);
-      } finally {
-        btn.innerHTML = `<i data-lucide="scan" class="w-4 h-4"></i><span>Scan & Auto-Discover All Fields</span>`;
-        lucide.createIcons();
-      }
-    }
-
-    function renderStudioFieldsTable() {
-      const tbody = document.getElementById("studioFieldsTableBody");
-      if (!currentStudioFields.length) {
-        tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-500 font-sans">No fields detected yet.</td></tr>`;
-        return;
-      }
-
-      let html = "";
-      currentStudioFields.forEach((f, idx) => {
-        const checked = f.selected !== false ? "checked" : "";
-        html += `<tr class="hover:bg-[#181d2c]">
-          <td class="p-2.5 text-center">
-            <input type="checkbox" id="chk_fld_${idx}" ${checked} onchange="toggleStudioField(${idx})" class="w-4 h-4 accent-blue-600 rounded cursor-pointer" />
-          </td>
-          <td class="p-2.5 font-mono text-blue-300 font-semibold">${escapeHtml(f.key)}</td>
-          <td class="p-2.5">
-            <input type="text" value="${escapeHtml(f.label)}" onchange="updateStudioFieldLabel(${idx}, this.value)" class="bg-[#090b12] border border-[#20273c] text-xs text-white px-2 py-1 rounded w-full font-sans focus:border-blue-500 focus:outline-none" />
-          </td>
-          <td class="p-2.5 text-slate-400 font-mono text-[11px] truncate max-w-[200px]">${escapeHtml(f.sample_value ?? '—')}</td>
-          <td class="p-2.5 text-center">
-            <span class="bg-[#181d2c] text-slate-300 text-[10px] px-2 py-0.5 rounded border border-[#20273c] uppercase">${f.data_type}</span>
-          </td>
-        </tr>`;
-      });
-
-      tbody.innerHTML = html;
-    }
-
-    function toggleStudioField(idx) {
-      currentStudioFields[idx].selected = document.getElementById(`chk_fld_${idx}`).checked;
-    }
-
-    function updateStudioFieldLabel(idx, val) {
-      currentStudioFields[idx].label = val;
-    }
-
-    function addCustomFieldRow() {
-      const keyInput = document.getElementById("customFieldKey");
-      const labelInput = document.getElementById("customFieldLabel");
-
-      const key = keyInput.value.trim().toLowerCase().replace(/[^a-z0-9_]/g, '_');
-      const label = labelInput.value.trim() || key;
-
-      if (!key) {
-        alert("Please enter a field key.");
-        return;
-      }
-
-      currentStudioFields.push({
-        key: key,
-        label: label,
-        sample_value: "Custom Field",
-        data_type: "string",
-        selected: true
-      });
-
-      keyInput.value = "";
-      labelInput.value = "";
-      renderStudioFieldsTable();
-    }
-
-    async function saveCurrentTemplate() {
-      const name = document.getElementById("inputTemplateName").value.trim();
-      const desc = document.getElementById("inputTemplateDesc").value.trim();
-
-      if (!name) {
-        alert("Please provide a template name.");
-        return;
-      }
-
-      const activeFields = currentStudioFields.filter(f => f.selected !== false);
-      if (!activeFields.length) {
-        alert("Please select at least one field.");
-        return;
-      }
-
-      // Strip UI-only keys; the server validates against CustomTemplate.
-      const fields = activeFields.map(({ selected, ...f }) => f);
-      const payload = { name: name, description: desc, fields: fields };
-
-      try {
-        // Editing an existing template -> update in place (PUT); otherwise create.
-        const res = currentTemplateId
-          ? await fetch(`/api/templates/${encodeURIComponent(currentTemplateId)}`, {
-              method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload)
-            })
-          : await fetch("/api/templates/save", {
-              method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload)
-            });
-        const json = await res.json();
-        if (!res.ok) throw new Error(json.detail ? JSON.stringify(json.detail) : `HTTP ${res.status}`);
-
-        const created = !currentTemplateId;
-        currentTemplateId = json.template.id;
-        await loadSavedTemplates(currentTemplateId);
-
-        const notice = document.getElementById("studioSaveNotice");
-        notice.textContent = `✓ Template "${json.template.name}" ${created ? "created" : "updated"}`;
-        setTimeout(() => notice.textContent = "", 4000);
-      } catch (e) {
-        alert("Save failed: " + e.message);
-      }
-    }
-
-    // Templates live only on the server (templates/*.json) - no browser copy that can drift.
-    let currentTemplateId = null;
-
-    async function loadSavedTemplates(selectId = null) {
-      const select = document.getElementById("studioTemplateSelect");
-      select.innerHTML = `<option value="">-- Choose Template --</option>`;
-
-      try {
-        const res = await fetch("/api/templates/list");
-        const json = await res.json();
-        (json.templates || []).forEach(t => {
-          const opt = document.createElement("option");
-          opt.value = t.id;
-          opt.textContent = `${t.name} (${t.fields ? t.fields.length : 0} fields)`;
-          select.appendChild(opt);
-        });
-        if (selectId) select.value = selectId;
-      } catch (e) {
-        console.error("Failed to load templates:", e);
-      }
-      try { localStorage.removeItem("esmagico_custom_templates"); } catch (e) { /* legacy cleanup */ }
-    }
-
-    async function onTemplateSelectChange() {
-      const id = document.getElementById("studioTemplateSelect").value;
-      if (!id) { createNewTemplateDraft(); return; }
-
-      try {
-        const res = await fetch(`/api/templates/${encodeURIComponent(id)}`);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const t = await res.json();
-        currentTemplateId = t.id;
-        document.getElementById("inputTemplateName").value = t.name;
-        document.getElementById("inputTemplateDesc").value = t.description || "";
-        currentStudioFields = (t.fields || []).map(f => ({ ...f, selected: true }));
-        renderStudioFieldsTable();
-      } catch (e) {
-        alert("Could not load template: " + e.message);
-      }
-    }
-
-    async function deleteSelectedTemplate() {
-      const id = document.getElementById("studioTemplateSelect").value;
-      if (!id) { alert("Choose a template to delete."); return; }
-      if (!confirm("Delete this template permanently?")) return;
-      const res = await fetch(`/api/templates/${encodeURIComponent(id)}`, { method: "DELETE" });
-      if (!res.ok) { alert(`Delete failed (HTTP ${res.status})`); return; }
-      createNewTemplateDraft();
-      await loadSavedTemplates();
-    }
-
-    function createNewTemplateDraft() {
-      currentTemplateId = null;
-      document.getElementById("inputTemplateName").value = "";
-      document.getElementById("inputTemplateDesc").value = "";
-      currentStudioFields = [];
-      renderStudioFieldsTable();
-      document.getElementById("studioTemplateSelect").value = "";
-    }
-
-    let lastCustomExtractedData = null;
-
-    async function testExtractWithTemplate() {
-      const templateId = document.getElementById("studioTemplateSelect").value;
-      if (!templateId) {
-        alert("Please save or choose a template first.");
-        return;
-      }
-
-      const sampleId = document.getElementById("studioSampleSelect").value;
-      if (!studioSelectedFile && !sampleId) {
-        alert("Please upload a document or choose a sample to extract.");
-        return;
-      }
-
-      const btn = document.getElementById("btnTestTemplateExtract");
-      btn.innerHTML = `<i data-lucide="loader" class="w-3.5 h-3.5 animate-spin"></i><span>Extracting with Template...</span>`;
-
-      const formData = new FormData();
-      formData.append("template_id", templateId);
-      formData.append("mode", document.getElementById("headerModeSelect").value);
-      if (studioSelectedFile) formData.append("file", studioSelectedFile);
-      if (sampleId) formData.append("doc_id", sampleId);
-
-      try {
-        const res = await fetch("/api/templates/extract", { method: "POST", body: formData });
-        const json = await res.json();
-        if (!res.ok) throw new Error(json.detail || `HTTP ${res.status}`);
-        lastCustomExtractedData = json.data;
-
-        const container = document.getElementById("studioCustomOutputContainer");
-        container.classList.remove("hidden");
-        const meta = {
-          method: json.method,
-          missing_fields: json.missing_fields,
-          needs_review: json.needs_review,
-          review_reasons: json.review_reasons,
-          warning: json.warning,
-          cost: json.cost,
-        };
-        document.getElementById("studioCustomOutputCode").textContent =
-          JSON.stringify(json.data, null, 2) + "\n\n// --- extraction info ---\n" + JSON.stringify(meta, null, 2);
-      } catch (e) {
-        alert("Extraction failed: " + e.message);
-      } finally {
-        btn.innerHTML = `<i data-lucide="play" class="w-3.5 h-3.5 fill-current"></i><span>Extract Document Using This Template</span>`;
-        lucide.createIcons();
-      }
-    }
-
-    function downloadCustomJson() {
-      if (!lastCustomExtractedData) return;
-      const blob = new Blob([JSON.stringify(lastCustomExtractedData, null, 2)], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `custom_template_extract.json`;
-      a.click();
-    }
-
-    // -------------------------------------------------------------
-    // 4. BENCHMARK
-    // -------------------------------------------------------------
-    async function triggerBenchmark() {
-      const btn = document.getElementById("btnTriggerBenchmark");
-      if (btn) btn.innerHTML = `<i data-lucide="loader" class="w-3.5 h-3.5 animate-spin"></i><span>Benchmarking...</span>`;
-
-      try {
-        const mode = document.getElementById("headerModeSelect").value;
-        const start = await fetch(`/api/eval/jobs?mode=${encodeURIComponent(mode)}`, { method: "POST" });
-        const sj = await start.json();
-        if (!start.ok) throw new Error(sj.detail || `HTTP ${start.status}`);
-
-        let job;
-        while (true) {
-          await new Promise(r => setTimeout(r, 2000));
-          job = await (await fetch(`/api/batch/jobs/${sj.job_id}`)).json();
-          if (btn) btn.innerHTML = `<i data-lucide="loader" class="w-3.5 h-3.5 animate-spin"></i><span>Benchmarking... ${job.elapsed_s}s</span>`;
-          if (job.status === "completed" || job.status === "failed") break;
-        }
-        if (job.status === "failed") throw new Error(job.error);
-        renderBenchmark(job.result);
-      } catch (e) {
-        alert("Benchmark error: " + e.message);
-      } finally {
-        if (btn) btn.innerHTML = `<i data-lucide="activity" class="w-3.5 h-3.5"></i><span>Run 10-Document Benchmark</span>`;
-        lucide.createIcons();
-      }
-    }
-
-    async function loadLatestBenchmark() {
-      try {
-        const res = await fetch("/api/eval/latest");
-        const json = await res.json();
-        if (json.available) renderBenchmark(json.result);
-      } catch (e) {
-        console.error("Could not load last eval:", e);
-      }
-    }
-
-    function renderBenchmark(json) {
-      {
-        const totalFields = Object.values(json.field_correct_counts || {}).reduce((a, b) => a + b, 0);
-        const pct = v => (v === null || v === undefined) ? "n/a" : `${(v * 100).toFixed(1)}%`;
-        document.getElementById("benchOverallAcc").textContent = `${json.overall_accuracy}%`;
-        document.getElementById("benchOverallSub").textContent =
-          `${totalFields} / ${json.total_docs * 8} fields - ${json.mode}`;
-        document.getElementById("benchDocsCorrect").textContent = `${json.docs_fully_correct} / ${json.total_docs}`;
-        document.getElementById("benchRowsSub").textContent =
-          `Line-item rows: P ${pct(json.line_item_row_precision)} / R ${pct(json.line_item_row_recall)}`;
-        document.getElementById("benchCost").textContent = `$${Number(json.avg_cost_per_doc || 0).toFixed(5)}`;
-        document.getElementById("benchCostSub").textContent =
-          `${json.total_tokens_in} in / ${json.total_tokens_out} out tokens (${json.total_docs} docs)`;
-        const rv = json.review || {};
-        document.getElementById("benchReview").textContent = pct(rv.recall);
-        document.getElementById("benchReviewSub").textContent =
-          `${rv.flagged_docs ?? 0} flagged, ${rv.docs_with_errors ?? 0} docs with errors`;
-
-        if (analyticsChartInstance && json.field_accuracy) {
-          const keys = ['is_invoice', 'vendor', 'invoice_number', 'invoice_date', 'currency', 'line_items', 'tax_total', 'total'];
-          analyticsChartInstance.data.datasets[0].data = keys.map(k => json.field_accuracy[k] || 0);
-          analyticsChartInstance.update();
-        }
-
-        const matrixBody = document.getElementById("groundTruthMatrixBody");
-        let html = "";
-        json.document_records.forEach(r => {
-          const m = r.field_matches;
-          const mark = (v) => v ? `<span class="text-emerald-400 font-bold">✓</span>` : `<span class="text-rose-400 font-bold">✗</span>`;
-
-          html += `<tr class="hover:bg-[#181d2c]">
-            <td class="p-2.5 font-bold text-blue-400">${r.doc_id}</td>
-            <td class="p-2.5 text-slate-300">${r.file_name}</td>
-            <td class="p-2.5 text-center">${mark(m.is_invoice)}</td>
-            <td class="p-2.5 text-center">${mark(m.vendor)}</td>
-            <td class="p-2.5 text-center">${mark(m.invoice_number)}</td>
-            <td class="p-2.5 text-center">${mark(m.invoice_date)}</td>
-            <td class="p-2.5 text-center">${mark(m.currency)}</td>
-            <td class="p-2.5 text-center">${mark(m.line_items)}</td>
-            <td class="p-2.5 text-center">${mark(m.tax_total)}</td>
-            <td class="p-2.5 text-center">${mark(m.total)}</td>
-          </tr>`;
-        });
-        matrixBody.innerHTML = html;
-      }
-    }
-
-    function initAnalyticsChart() {
-      const ctx = document.getElementById("analyticsChart").getContext("2d");
-      analyticsChartInstance = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: ['is_invoice', 'vendor', 'invoice_num', 'date', 'currency', 'line_items', 'tax_total', 'total'],
-          datasets: [{
-            label: 'Field Accuracy %',
-            data: [0, 0, 0, 0, 0, 0, 0, 0],  // filled from /api/eval/latest or a new run
-            backgroundColor: '#2563eb',
-            borderRadius: 4
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: {
-            y: { beginAtZero: true, max: 100, grid: { color: '#20273c' }, ticks: { color: '#94a3b8' } },
-            x: { grid: { display: false }, ticks: { color: '#f1f5f9' } }
-          },
-          plugins: { legend: { display: false } }
-        }
-      });
-    }
-
-    async function loadMcpManifest() {
-      try {
-        const res = await fetch("/api/mcp/manifest");
-        const json = await res.json();
-        document.getElementById("mcpManifestBlock").textContent = JSON.stringify(json, null, 2);
-      } catch (e) {
-        document.getElementById("mcpManifestBlock").textContent = "Error loading MCP Manifest.";
-      }
-    }
-
-    // -------------------------------------------------------------
-    // 5. SECURITY & KEYS
-    // -------------------------------------------------------------
-    async function fetchPiiStatus() {
-      try {
-        const res = await fetch("/api/pii/status");
-        const json = await res.json();
-        piiShieldActive = json.enabled;
-        updatePiiBadge();
-      } catch (e) {
-        console.error("PII status error:", e);
-      }
-    }
-
-    async function togglePiiShield() {
-      piiShieldActive = !piiShieldActive;
-      try {
-        await fetch("/api/pii/toggle", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ enabled: piiShieldActive })
-        });
-        updatePiiBadge();
-      } catch (e) {
-        alert("Toggle failed: " + e.message);
-      }
-    }
-
-    function updatePiiBadge() {
-      const badge = document.getElementById("piiShieldBadge");
-      const btn = document.getElementById("btnPiiToggle");
-      if (piiShieldActive) {
-        badge.className = "flex items-center space-x-1.5 px-2.5 py-1 rounded bg-[#131e1c] border border-emerald-800 text-emerald-400 font-mono text-[11px]";
-        badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span><span>PII Shield Active</span>`;
-        if (btn) {
-          btn.textContent = "Enabled";
-          btn.className = "bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs px-3.5 py-1.5 rounded transition";
-        }
-      } else {
-        badge.className = "flex items-center space-x-1.5 px-2.5 py-1 rounded bg-[#1e1313] border border-rose-800 text-rose-400 font-mono text-[11px]";
-        badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span><span>PII Shield Disabled</span>`;
-        if (btn) {
-          btn.textContent = "Disabled";
-          btn.className = "bg-rose-600 hover:bg-rose-500 text-white font-medium text-xs px-3.5 py-1.5 rounded transition";
-        }
-      }
-    }
-
-    async function loadKeysConfig() {
-      try {
-        const res = await fetch("/api/settings/keys");
-        const json = await res.json();
-
-        if (json.groq && json.groq.keys_masked) {
-          if (json.groq.keys_masked[0]) document.getElementById("inputGroq1").placeholder = json.groq.keys_masked[0];
-          if (json.groq.keys_masked[1]) document.getElementById("inputGroq2").placeholder = json.groq.keys_masked[1];
-        }
-        if (json.gemini && json.gemini.masked) document.getElementById("inputGemini").placeholder = json.gemini.masked;
-        if (json.openai && json.openai.masked) document.getElementById("inputOpenAI").placeholder = json.openai.masked;
-        if (json.openai && json.openai.base_url) document.getElementById("inputOpenAIBase").value = json.openai.base_url;
-        if (json.local) {
-          document.getElementById("inputLocalUrl").value = json.local.base_url;
-          document.getElementById("inputLocalModel").value = json.local.model;
-        }
-      } catch (e) {
-        console.error("Failed to load settings:", e);
-      }
-    }
-
-    async function testProvider(prov) {
-      const statusEl = document.getElementById(`testStatus${prov.charAt(0).toUpperCase() + prov.slice(1)}`);
-      statusEl.className = "text-xs font-mono text-blue-400";
-      statusEl.textContent = `Connecting to ${prov}...`;
-
-      let apiKey = "";
-      let baseUrl = "";
-      let model = "";
-
-      if (prov === "groq") apiKey = document.getElementById("inputGroq1").value;
-      if (prov === "gemini") apiKey = document.getElementById("inputGemini").value;
-      if (prov === "openai") {
-        apiKey = document.getElementById("inputOpenAI").value;
-        baseUrl = document.getElementById("inputOpenAIBase").value;
-      }
-      if (prov === "local") {
-        baseUrl = document.getElementById("inputLocalUrl").value;
-        model = document.getElementById("inputLocalModel").value;
-      }
-
-      try {
-        const res = await fetch("/api/settings/test-connection", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ provider: prov, api_key: apiKey, base_url: baseUrl, model: model })
-        });
-        const json = await res.json();
-
-        if (json.success) {
-          statusEl.className = "text-xs font-mono text-emerald-400";
-          statusEl.textContent = `✓ ${json.message}`;
-        } else {
-          statusEl.className = "text-xs font-mono text-rose-400";
-          statusEl.textContent = `✗ ${json.message}`;
-        }
-      } catch (e) {
-        statusEl.className = "text-xs font-mono text-rose-400";
-        statusEl.textContent = `✗ Test call failed: ${e.message}`;
-      }
-    }
-
-    async function saveAllKeys() {
-      const payload = {
-        ai_mode: document.getElementById("headerModeSelect").value,
-        groq_keys: [
-          document.getElementById("inputGroq1").value,
-          document.getElementById("inputGroq2").value
-        ].filter(k => k.trim()),
-        gemini_key: document.getElementById("inputGemini").value,
-        openai_key: document.getElementById("inputOpenAI").value,
-        openai_base_url: document.getElementById("inputOpenAIBase").value,
-        local_url: document.getElementById("inputLocalUrl").value,
-        local_model: document.getElementById("inputLocalModel").value
-      };
-
-      try {
-        const res = await fetch("/api/settings/save-keys", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
-        const json = await res.json();
-        const notice = document.getElementById("saveSuccessNotice");
-        notice.textContent = "✓ Settings successfully saved to .env file!";
-        setTimeout(() => { notice.textContent = ""; }, 4000);
-      } catch (e) {
-        alert("Save failed: " + e.message);
-      }
-    }
-
-    function onModeChange() {
-      // Kept synced
-    }
-  </script>
+    <button class="btn btn-icon btn-ghost" id="drawerClose" title="Close (Esc)"><i data-lucide="x"></i></button>
+  </div>
+  <div class="drawer-body"><div id="drawerLeft"></div><div id="drawerRight"></div></div>
+</aside>
+<div class="modal" id="modal" role="dialog">
+  <div style="font-weight:650;font-size:14px" id="modalTitle"></div>
+  <div class="text-2 mt-2" id="modalBody"></div>
+  <div class="flex justify-end gap-2 mt-5"><button class="btn btn-ghost" id="modalCancel">Cancel</button><button class="btn btn-primary" id="modalOk">OK</button></div>
+</div>
+<div class="toasts" id="toasts"></div>
+
+<script src="/static/js/core.js"></script>
+<script src="/static/js/overview.js"></script>
+<script src="/static/js/workspace.js"></script>
+<script src="/static/js/batch.js"></script>
+<script src="/static/js/templates.js"></script>
+<script src="/static/js/evaluation.js"></script>
+<script src="/static/js/mcp.js"></script>
+<script src="/static/js/settings.js"></script>
 </body>
-
 </html>

@@ -378,12 +378,13 @@ class TemplateEngine:
 
     @classmethod
     def extract_with_custom_template(cls, file_path: Path, template: Dict[str, Any],
-                                     backend_mode: Optional[str] = None) -> Dict[str, Any]:
+                                     backend_mode: Optional[str] = None, backend=None) -> Dict[str, Any]:
+        """`backend` may be passed in so parallel batch workers share one rate-limit bucket."""
         tmpl = CustomTemplate(**template)
         doc = load_document(file_path)
         if not doc.is_readable:
             raise ValueError(doc.error or "Unreadable document")
-        backend = get_backend(backend_mode)
+        backend = backend or get_backend(backend_mode)
         raw_data: Dict[str, Any] = {}
         method, warning, cost = "offline", None, {}
 

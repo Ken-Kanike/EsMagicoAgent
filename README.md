@@ -1,299 +1,273 @@
-# EsMagico | AI Intern Assignment — Invoice Extraction Pipeline
+# Invoice Extraction Pipeline
 
-A production-grade, multi-backend intelligent invoice extraction and validation pipeline designed to parse messy vendor invoices (clean PDFs, smartphone camera scans, multi-page tables) into strictly validated JSON conforming to `schema.json`.
+Reads a vendor invoice (clean PDF, phone scan or photo) and returns **validated JSON** in the assignment schema. It also handles documents that are not invoices, and corrupt files. It comes with a one-command evaluation, outputs for all 20 sample documents, a dashboard, and an MCP server so agents can use the pipeline as tools.
+
+> **Results, approach, failure analysis and cost are in [REPORT.md](REPORT.md).** In short, on the 10 labelled documents with Groq (`qwen/qwen3.8-27b` vision + `openai/gpt-oss-120b` text):
+> - **80/80 fields (100%)** on the final run, and 79/80 on two earlier runs;
+> - **$0.0019 per document** at list price.
+>
+> The prompt was iterated while looking at the labelled set, so read the 100% as "no errors on 10 documents I partly tuned against". The rule-based baseline scores 92.5–93.8% on the same set but generalises poorly. REPORT.md has the details.
 
 ---
 
-## 1. Quick Setup & Fresh Clone Instructions
+## Contents
 
-### Prerequisites
-- Python 3.10+ (tested on Python 3.12)
-- *(Optional for image OCR)* Tesseract OCR binary:
-  - Windows: `winget install UB-Mannheim.TesseractOCR`
-  - Linux: `sudo apt-get install tesseract-ocr`
+1. [Assignment checklist](#1-assignment-checklist)
+2. [Setup (fresh clone)](#2-setup-fresh-clone)
+3. [Run it](#3-run-it)
+4. [How it works](#4-how-it-works)
+5. [Validation and bad inputs](#5-validation-and-bad-inputs)
+6. [Evaluation harness and matching rules](#6-evaluation-harness-and-matching-rules)
+7. [Dashboard](#7-dashboard)
+8. [MCP server (agents)](#8-mcp-server-agents)
+9. [Configuration](#9-configuration)
+10. [Project layout](#10-project-layout)
+11. [Privacy, security and limits](#11-privacy-security-and-limits)
 
-### Installation
+---
+
+## 1. Assignment checklist
+
+| Requirement | Where |
+|---|---|
+| LLM-based extractor, PDF/image → schema JSON, with a reason for the approach | [pipeline/extractor.py](pipeline/extractor.py), [config/prompts.py](config/prompts.py), [REPORT.md §1](REPORT.md#1-approach) |
+| CLI: `python extract.py invoice.pdf > out.json` | `python scripts/extract.py invoice.pdf > out.json` |
+| API | FastAPI: `uvicorn api.main:app` → `POST /extract`, docs at `/docs` |
+| Schema validation (Pydantic) + `sum(items) + tax ≈ total` + retry/flag | [pipeline/validator.py](pipeline/validator.py), [§5](#5-validation-and-bad-inputs) |
+| Non-invoices + one more bad-input case (**chosen: corrupt/unreadable files**) | [§5](#5-validation-and-bad-inputs), [REPORT.md §6](REPORT.md#6-bad-inputs) |
+| One-command eval on the 10 labelled docs, field-by-field table, stated matching rules | `python scripts/eval.py`, [§6](#6-evaluation-harness-and-matching-rules) |
+| JSON for all 20 documents | [outputs/](outputs/) (`L01`–`L10`, `U01`–`U10`) |
+| Report: approach, what did not work, field accuracy, failure analysis, cost per document | [REPORT.md](REPORT.md) and the generated [reports/accuracy_table.md](reports/accuracy_table.md) |
+| Overfitting disclosure | [REPORT.md › Overfitting disclosure](REPORT.md#overfitting-disclosure) |
+| No API keys committed; `.env.example` provided | `.env` is git-ignored; [.env.example](.env.example) |
+| Bonus: `needs_review` checked against the data | [REPORT.md §5](REPORT.md#5-bonus-is-needs_review-checked-against-the-data), Evaluation page of the dashboard |
+| Bonus: upload a document and see the fields next to it | Dashboard → Workspace ([§7](#7-dashboard)) |
+
+---
+
+## 2. Setup (fresh clone)
+
+Requirements: **Python 3.10+** (tested on 3.12, Windows and Linux). No system binaries are needed: OCR uses `rapidocr-onnxruntime` from pip, and Tesseract is only an optional fallback.
+
 ```bash
-# 1. Clone repository
-git clone <repo-url>
-cd EsMagicoAgent
-
-# 2. Install dependencies
+git clone <repo-url> && cd EsMagicoAgent
+python -m venv .venv
+# Windows: .venv\Scripts\activate      macOS/Linux: source .venv/bin/activate
 pip install -r requirements.txt
 
-# 3. Configure environment
-cp .env.example .env
-# Edit .env to add your Groq keys, local Ollama endpoint, or OpenAI keys
+cp .env.example .env        # Windows: copy .env.example .env
+# then put at least one Groq key in .env:  GROQ_API_KEY_1=gsk_...   (free at https://console.groq.com)
 ```
 
-### Verify Installation
-```bash
-python scripts/install_deps.py
+To check that everything works without any key, run `python -m pytest tests -q` (32 tests, no network calls) and `python scripts/eval.py --mode no_ai --no-save` (the rule-based baseline).
+
+If you pick a cloud backend without a key, you get a clear error. It never silently falls back to the rule engine, so a baseline run can't be mistaken for an LLM run.
+
+---
+
+## 3. Run it
+
+| Task | Command |
+|---|---|
+| Extract one document (JSON to stdout) | `python scripts/extract.py invoice.pdf > out.json` |
+| …with review flag, reasons, tokens and cost | `python scripts/extract.py invoice.pdf --meta` |
+| …fail the shell step if it needs review | `python scripts/extract.py invoice.pdf --strict` (exit 3) |
+| **Evaluate on the 10 labelled docs** | `python scripts/eval.py` (default backend from `AI_MODE`) |
+| Rule-based baseline, without touching outputs/reports | `python scripts/eval.py --mode no_ai --no-save` |
+| Batch a folder (writes `outputs/<name>.json`) | `python scripts/batch.py "Es Magico - AI Intern Assignment - Sample Pack/unlabelled"` |
+| Dashboard | `python scripts/serve_dashboard.py`, then open http://localhost:8000 |
+| REST API only | `uvicorn api.main:app --port 8000` (OpenAPI docs at `/docs`) |
+| MCP server (stdio) | `python scripts/mcp_server.py` ([§8](#8-mcp-server-agents)) |
+| Tests | `python -m pytest tests -q` |
+
+Common flags:
+- `--mode groq|openai|gemini|local|no_ai` picks the backend.
+- `--cache/--no-cache` controls reuse of results keyed by file hash + model + prompt version + image-pipeline version.
+- `--workers N` sets how many documents run in parallel.
+
+Exit codes for `extract.py`: `0` OK · `1` unreadable or unsupported file · `2` backend not configured · `3` needs review (only with `--strict`).
+
+Example output (U08, Dutch invoice with European number format):
+
+```json
+{
+  "is_invoice": true,
+  "vendor": "Sakura Tea Traders B.V.",
+  "invoice_number": "2026/0314",
+  "invoice_date": "2026-03-14",
+  "currency": "EUR",
+  "line_items": [{ "description": "Sencha Premium, 1 kg bag", "quantity": 8.0, "amount": 340.0 }, "..."],
+  "tax_total": 107.25,
+  "total": 1136.25
+}
 ```
 
 ---
 
-## 2. Running the Pipeline
+## 4. How it works
 
-### A. Single Document CLI (Piping Supported)
-Extract structured JSON from any file directly to stdout:
-```bash
-python scripts/extract.py "Es Magico - AI Intern Assignment - Sample Pack/labelled/L01.pdf" --mode no_ai > out.json
 ```
-Options:
-- `--mode`: `no_ai` (rule engine), `groq` (cloud multi-key pool), `local` (Ollama/Hermes), `gemini`, `openai`, `antigravity`.
-- `--save / --no-save`: Auto-saves output into `outputs/<doc_id>.json` (default: enabled).
-
-### B. One-Command Evaluation Harness (25% Weight)
-Evaluate against all 10 ground truth labelled documents (`L01` through `L10`):
-```bash
-python scripts/eval.py
-```
-Or specify a backend:
-```bash
-python scripts/eval.py --mode no_ai
-python scripts/eval.py --mode groq
-```
-Generates a Rich terminal table, per-document matrix, cost calculations, and markdown reports in `reports/accuracy_table.md`.
-
-### C. Batch Processing
-Process an entire folder (e.g. unlabelled test pack):
-```bash
-python scripts/batch.py "Es Magico - AI Intern Assignment - Sample Pack/unlabelled" --mode no_ai
+file ─► load + bad-input checks ─────────────────────────────────────► typed error (never sent to a model)
+          ├─ digital PDF (text layer) ─► layout text "cell | cell" ─► text LLM   (gpt-oss-120b, JSON mode)
+          └─ scan / photo ─► render 200 dpi ─► auto-upright ─► image ─► vision LLM (qwen3.8-27b, JSON mode)
+                                                      │
+               normalise numbers / dates / currency (1.136,25 → 1136.25; 07/02/2026 → ISO by locale)
+                                                      │
+          validate: schema · required fields · Σ items + tax = total · qty × unit price · issue vs due date
+                                                      │ errors?
+                  corrective retry quoting the exact errors (max 2) ─► keep the best attempt
+                                                      │
+                     JSON + needs_review + review_reasons + tokens + USD cost
 ```
 
-### D. Enterprise AP Operations Platform (Dark Industry Suite)
-A dark, high-density operations console built in modern JavaScript, Tailwind CSS, Chart.js, and Lucide icons:
-```bash
-python scripts/serve_dashboard.py
-# Or with an optional custom port:
-python scripts/serve_dashboard.py --port 8000
-```
-Open your browser at **`http://localhost:8000`** to access:
-- **Workspace:** Split layout with high-resolution document viewer (zoom in/out/reset, direct file drag-and-drop) alongside verified summary fields, line items table, and raw JSON.
-- **Batch Ingestion Hub:** Drag and drop arbitrary batches of new invoices with multi-file queueing, real-time extraction progress bar, and 1-click **Excel (.xlsx)** and **JSON (.zip)** exports strictly for uploaded files.
-- **Dynamic Template Studio:** Upload any document (or select an existing one), view its live rendered visual preview, auto-discover all entities (`Key: Value`, tables, dates, amounts), define custom output schemas, and save reusable OCR templates.
-- **Evaluation Benchmark:** 1-click automated benchmark against the 10 labelled ground-truth documents (`L01`..`L10`) with field-by-field accuracy charts and verification matrix.
-- **Model Context Protocol (MCP):** Live JSON-RPC tools manifest endpoint (`/api/mcp/manifest`) for external agents (Antigravity, OpenCode, Hermes).
-- **Security Governance & Keys:** Live PII Redaction Shield status toggle and multi-key connection tester for Groq, Gemini, OpenAI, and Local LLMs before writing to `.env`.
+- **Why this routing:** a digital PDF's text layer has exact characters and costs about 3× fewer tokens than an image, so it goes to a strong text model. Scans and photos go to a vision model, which reads layout and handwriting-quality print far better than OCR followed by an LLM. Model choice and alternatives are discussed in [REPORT.md §1](REPORT.md#model-choice-and-why).
+- **Prompt:** the sample pack's labelling conventions, restated as rules:
+  - vendor = the seller;
+  - date = issue date, not due date;
+  - `quantity = null` on rows without a quantity;
+  - discounts are negative line items;
+  - `tax_total` = the sum of every tax line;
+  - locale-aware numbers and dates.
 
-### E. Production REST API (FastAPI)
-```bash
-uvicorn api.main:app --reload --port 8000
-```
-Interactive Swagger documentation available at: `http://localhost:8000/docs`
-- `GET /health` — Service health & key pool status
-- `POST /extract` — Upload invoice file, receive validated JSON
-- `GET /eval` — Trigger evaluation benchmark
-
-### F. Run Automated Unit Tests
-```bash
-pytest tests/ -v
-```
+  The model also returns two helper fields that are dropped from the output: `unit_price` (checks quantity × price = amount) and `due_date` (catches misread years on scans).
+- **Rate limits:** a client-side token bucket keeps parallel workers under Groq's tokens-per-minute limit, and a 429 waits for the server's `retry-after`.
 
 ---
 
-## 3. Architecture & Approach
+## 5. Validation and bad inputs
 
-### Multi-Backend Strategy
-The pipeline is decoupled through an abstract `AIBackend` interface:
-1. **No-AI Deterministic Engine (`no_ai`):** High-speed regex and layout heuristics extracting text via PyMuPDF (`fitz`). Zero external API calls, \$0.00 cost.
-2. **Groq Cloud Multi-Key Pool (`groq`):** Uses an intelligent round-robin rotator supporting up to 10 free API keys. Automatically intercepts HTTP 429 rate limits, triggers 65-second per-key cooldowns, and routes image scans to `meta-llama/llama-4-scout-17b-16e-instruct` and text to `llama-3.3-70b-versatile`.
-3. **Local LLMs (`local`):** Connects to any local OpenAI-compatible inference engine (Ollama, LM Studio, llama.cpp, NousResearch Hermes 3, or OpenCode) for 100% data privacy.
-4. **Google Gemini & OpenAI / Antigravity (`gemini`, `openai`, `antigravity`):** Native gateway integrations for commercial-grade accuracy.
+**Checks** ([pipeline/validator.py](pipeline/validator.py)):
+- Pydantic schema; a non-invoice must have every other field `null`.
+- Required invoice fields are present.
+- `|Σ line amounts + tax − total| ≤ max(0.05, 0.01 × rows)`.
+- Quantity × unit price = amount.
+- The issue date isn't after the due date or more than 120 days before it.
+- No negative tax, and quantity ≠ amount.
 
-### Schema & Arithmetic Validation Engine
-Every document passes through Pydantic v2 validation adhering strictly to `schema.json`:
-- **Conditional Non-Invoice Check:** If `is_invoice == false`, all other 7 fields (`vendor`, `invoice_number`, `invoice_date`, `currency`, `line_items`, `tax_total`, `total`) are verified to be `null`.
-- **Arithmetic Balance Verification:** Checks that $\sum(\text{line\_items.amount}) + \text{tax\_total} = \text{total}$ within a configurable floating-point tolerance ($\pm 0.05$).
-- **Autonomous Self-Correction:** When an arithmetic or schema discrepancy is flagged, the pipeline prompts the LLM with the exact validation error message for a targeted retry.
+**When a check fails:** the model gets the exact error messages and retries (up to 2 times), and the best attempt is kept. If anything still fails, the result is returned with **`needs_review: true`** and `review_reasons`. Bad data is never passed on silently. Whether the flag actually catches the errors is measured in [REPORT.md §5](REPORT.md#5-bonus-is-needs_review-checked-against-the-data).
 
-### What We Tried That Did Not Work (Honest Finding)
-- **Pure Regex on Low-Resolution Scans (`L02.jpg`):** While our rule-based engine achieved 70% accuracy on digital PDF vendors and dates, it achieves 0% on pure image scans without OCR or vision models. Layout variations, non-standard tabular delimiters, and optical noise make pure heuristic parsers brittle. Integrating multi-modal vision (`llama-4-scout` / `gpt-4o`) was essential for scans.
+| Bad input | Behaviour |
+|---|---|
+| Not an invoice (PO, bank statement, letter) | `is_invoice: false`, all other fields `null` (L08, U06, U10) |
+| **Chosen case: corrupt or unreadable file** (0 bytes, truncated or garbage PDF, broken image, password-protected PDF, unsupported type) | Caught at load time and never sent to a model. Returns `{"error": "...", "error_type": "corrupt_file" \| "unsupported", "needs_review": true}`; the CLI exits 1 and a batch carries on with the other files |
+| API trouble (429, timeout, 5xx, quota, bad key) | Backoff and retry with rate-limit pacing; finally `error_type: "backend_error"`. Never a silent backend switch |
+| Model returns broken JSON | One repair round-trip, then `error_type: "unparseable"` |
+| Sideways scan | Auto-rotated before extraction |
 
 ---
 
-## 4. Evaluation & Accuracy Results
+## 6. Evaluation harness and matching rules
 
-Matching rules applied in `eval/metrics.py`:
-- `is_invoice`: Exact boolean match.
-- `vendor`: RapidFuzz `token_set_ratio >= 85%` (resilient to legal suffix abbreviations like "Pvt Ltd" vs "Private Limited").
-- `invoice_number`: Exact uppercase normalized string.
-- `invoice_date`: Strict ISO 8601 `YYYY-MM-DD`.
-- `currency`: Exact 3-letter ISO 4217 code.
-- `line_items`: Sequential row check (description fuzzy >= 70%, amount within ±0.05).
-- `tax_total` & `total`: Absolute difference <= 0.05.
+`python scripts/eval.py` runs the extractor on `L01`–`L10` in parallel and prints:
+- a field-level accuracy table and a per-document matrix;
+- errors grouped by cause (tags computed from the data);
+- the `needs_review` precision/recall check;
+- tokens and cost.
 
-### Accuracy Table (Labelled Dataset L01 - L10)
+It writes [reports/accuracy_table.md](reports/accuracy_table.md) and `reports/eval_results.json`. The rules are implemented in [eval/metrics.py](eval/metrics.py):
 
-| Field | Offline No-AI Engine (RapidOCR + Layout Parser) | LLM Vision Pipeline (Groq / GPT-4o) |
+| Field | Rule |
+|---|---|
+| `is_invoice` | exact boolean |
+| `vendor` | case/punctuation-insensitive; legal suffixes canonicalised (Pvt Ltd = Private Limited, Ltd = Limited, Co = Company…); equal, or `fuzz.ratio ≥ 90`. No subset matching ("Acme" ≠ "Acme Holdings Global") |
+| `invoice_number` | exact after trimming whitespace and upper-casing |
+| `invoice_date` | exact ISO `YYYY-MM-DD` |
+| `currency` | exact ISO-4217 code |
+| `tax_total`, `total` | numeric, `|pred − gt| ≤ 0.01` after parsing (`"1,200.00"` = `1200`) |
+| `line_items` | strict: same number of rows, in order; description fuzz ≥ 80, quantity equal or both `null`, amount within 0.01. Row-level precision/recall is reported separately |
+| both `null` | match (non-invoices) |
+
+---
+
+## 7. Dashboard
+
+`python scripts/serve_dashboard.py` → http://localhost:8000. Plain HTML/JS modules ([dashboard/static/](dashboard/static/)) on top of the same REST API, with no build step.
+
+| Page | What it does |
+|---|---|
+| **Overview** | Headline accuracy, cost per document, review queue (documents flagged in the last runs, with reasons), field-accuracy chart, every deliverable output with a Σ check |
+| **Workspace** | Pick a sample or upload/drag a file; the document preview (zoom, pages) sits next to the extracted fields, line items, a ground-truth comparison (labelled docs) and the JSON. Shows the validation banner, tokens, cost and latency |
+| **Batch processing** | Drop many files and choose the **invoice schema or any saved template**. Runs as a background job with live progress; results can be filtered (needs review / errors / valid); click any row for a **preview drawer** with the document and its fields; export to Excel or a JSON zip |
+| **Template studio** | Define custom fields for non-invoice documents (hall tickets, waybills…): auto-discover fields with the LLM, edit keys, types and required flags, save/update/delete, test, then **Use in batch** |
+| **Evaluation** | Run the labelled eval (asks before spending API calls), field chart, per-document matrix with a prediction-vs-truth drawer, error groups, `needs_review` confusion matrix, cost method |
+| **MCP & agents** | Copy-paste config for Claude Code, Claude Desktop, Cursor and the MCP Inspector (with this machine's paths), the tool list, and a **playground** that calls each tool with a generated form |
+| **Settings** | Default backend, provider keys with live connection tests, PII shield toggle with a redaction tester |
+
+Results produced in the dashboard are written to `outputs/dashboard/`. The deliverable `outputs/*.json` files are only written by the CLI, so trying another backend in the UI can't overwrite them.
+
+---
+
+## 8. MCP server (agents)
+
+[scripts/mcp_server.py](scripts/mcp_server.py) exposes the pipeline over the Model Context Protocol (official Python SDK, stdio). The tools are implemented once in [pipeline/tools.py](pipeline/tools.py), and the dashboard playground calls the same functions.
+
+| Tool | Purpose |
+|---|---|
+| `list_documents` | sample and uploaded documents with their `doc_id` |
+| `extract_invoice` | schema JSON + `needs_review`, reasons, tokens, cost (`doc_id`, or an absolute `path` over MCP) |
+| `validate_invoice_json` | run the schema + arithmetic checks on JSON produced elsewhere |
+| `list_templates` / `extract_with_template` | custom-field extraction for any document type |
+| `get_latest_evaluation` | accuracy per field, cost per document, review-flag check |
+
+```bash
+claude mcp add invoice-pipeline -- python /abs/path/to/scripts/mcp_server.py     # Claude Code
+python scripts/mcp_server.py --print-config                                       # Claude Desktop / Cursor block
+npx @modelcontextprotocol/inspector python scripts/mcp_server.py                  # try it interactively
+```
+
+Over HTTP (`POST /api/mcp/call`) only `doc_id`s are accepted, never file paths.
+
+---
+
+## 9. Configuration
+
+All settings live in `.env` (see [.env.example](.env.example)); defaults are in [config/settings.py](config/settings.py).
+
+| Variable | Default | Meaning |
 |---|---|---|
-| `is_invoice` | **100.0%** (10/10) | **100.0%** (10/10) |
-| `vendor` | **90.0%** (9/10) | **100.0%** (10/10) |
-| `invoice_number` | **100.0%** (10/10) | **100.0%** (10/10) |
-| `invoice_date` | **100.0%** (10/10) | **100.0%** (10/10) |
-| `currency` | **100.0%** (10/10) | **100.0%** (10/10) |
-| `line_items` | **70.0%** (7/10) | **90.0%** (9/10) |
-| `tax_total` | **90.0%** (9/10) | **90.0%** (9/10) |
-| `total` | **100.0%** (10/10) | **100.0%** (10/10) |
-| **OVERALL** | **93.8%** (75/80) | **96.3%** (77/80) |
-
-*(Generated automatically by `python scripts/eval.py`)*
-
----
-
-## 5. Failure Analysis & Remediation
-
-| Failure Category | Examples | Root Cause | Engineering Fix |
-|---|---|---|---|
-| **1. Optical Character Confusion** | `L02.jpg`, `L10.pdf` | Noisy background and low scan DPI cause '0' vs 'O' or '1' vs 'I' confusion in invoice numbers. | Image contrast preprocessing (`PIL.ImageEnhance`) + RapidOCR ONNX layout engine before OCR. |
-| **2. Multi-Page & Dense Table Splitting** | `L04.pdf` (24 items) | Extensive line-item tables spanning page boundaries can trigger context clipping or truncation. | Increased completion token allocation (2,500 tokens) and sequential coordinate stream matching. |
-| **3. Date Format Ambiguity** | `L01.pdf` (`08/04/2026`) | Day-first (UK/India) vs Month-first (US) ambiguity without regional context. | Master prompt enforces cross-referencing vendor origin and currency before outputting `YYYY-MM-DD`. |
-| **4. Non-Invoice Discrimination** | `L08.pdf` (Purchase Order) | POs feature identical tables, line items, and taxes as sales invoices. | Discriminator prompt checking headers ('PURCHASE ORDER') to enforce `is_invoice: false` and null out remaining fields. |
+| `AI_MODE` | `groq` | `groq` · `openai` · `gemini` · `local` · `no_ai` |
+| `GROQ_API_KEY_1..10` | – | rotated; free-tier limits are per organisation |
+| `GROQ_VISION_MODEL` / `GROQ_TEXT_MODEL` | `qwen/qwen3.8-27b` / `openai/gpt-oss-120b` | scans / digital PDFs |
+| `ROUTE_DIGITAL_TO_TEXT` | `true` | send PDFs with a text layer to the text model |
+| `MAX_RETRIES` | `2` | corrective retries after a failed validation |
+| `ARITHMETIC_TOLERANCE` | `0.05` | Σ check tolerance (currency units) |
+| `RENDER_DPI` / `MAX_IMAGE_SIDE` / `MAX_PAGES` | `200` / `1800` / `5` | image input |
+| `MAX_WORKERS` | `4` | documents in parallel |
+| `CACHE_ENABLED` | `true` | result cache in `.cache/` |
+| `PII_SHIELD_ENABLED` | `false` | mask bank/card/ID numbers in text sent to cloud models |
+| `OPENAI_*`, `GEMINI_*`, `LOCAL_LLM_*` | – | alternative backends (OpenAI-compatible APIs, Ollama/LM Studio) |
 
 ---
 
-## 6. Bad Input Handling (Requirement 3)
-
-1. **Non-Invoice Documents:**
-   - Correctly identifies bank statements (`U06`), purchase orders (`L08`), and cover letters (`U10`), returning `is_invoice: false` and `null` for all other 7 fields.
-2. **Corrupt / Zero-Byte / Truncated Files:**
-   - PyMuPDF and Pillow loaders trap `fitz.FileDataError` and empty files, returning `{"error": "corrupt_file", "needs_review": true}` without throwing unhandled exceptions or halting batch execution.
-
----
-
-## 7. Enterprise Multi-Page Operations Platform & Dashboard
-
-Launch the dark, industrial-grade operations platform:
-
-```powershell
-python scripts/serve_dashboard.py
-# Or bind to an alternate port if desired:
-python scripts/serve_dashboard.py --port 8080
-```
-*Live at [http://localhost:8000](http://localhost:8000)*
-
-### 6 Dedicated Operations Pages:
-1. **Workspace:** Split layout with a high-resolution PDF/image document viewer on the left (interactive zoom, rotate, and direct drag-and-drop file intake) alongside verified summary fields (Vendor, Inv #, Date, Currency, Tax, Total, ±0.00 Arithmetic Balance badge), interactive line items table, and schema-compliant JSON copy/download. When non-invoices (`L08`, `U06`, `U10`) are loaded, a clear regulatory banner explains the null schema rule.
-2. **Batch Ingestion Hub:** Purpose-built for new arbitrary document batches. Starts empty by default. Drag & drop 5, 20, 50+ files at once, preview queued file chips, execute batch extraction with real-time percentage progress, and export **strictly the uploaded files** to multi-sheet **Excel (.xlsx)** and **JSON (.zip)**.
-3. **Template Studio:** Visual OCR template builder. Upload any novel document format, inspect its high-resolution rendering, auto-discover all entities (`Key: Value` pairs, tables, dates, numbers), customize field keys and labels, add arbitrary custom fields, save templates to browser `localStorage` and backend `templates/`, and run custom-schema extraction.
-4. **Evaluation Benchmark:** 1-click evaluation against the 10 labelled ground-truth answers (`L01` through `L10`), featuring interactive Chart.js field accuracy breakdown and ground-truth verification matrix.
-5. **MCP Tools Manifest:** Complete architectural guide to Local LLMs (Ollama / Nous Hermes 3 / OpenCode) and Model Context Protocol (MCP) tool integration. Demonstrates air-gapped on-premise privacy, self-correcting reasoning loops, and 3-way ERP reconciliation against purchase orders. Includes live JSON-RPC manifest at `/api/mcp/manifest`.
-6. **Security & API Store:** Manage API credentials directly from the browser with live connection ping tests before saving (Groq 10-key rotation pool, Google Gemini, OpenAI/Antigravity gateway, and Local LLM endpoints). Includes the live **Cloud PII Redaction & Privacy Shield** toggle.
-
----
-
-## 8. Cloud PII Redaction & Privacy Shield
-
-Vendor invoices often contain sensitive banking details, national tax IDs, and confidential commercial contact info. When utilizing external cloud models (Groq, OpenAI, Google Gemini), our **PII Shield** (`pipeline/pii_shield.py`) guarantees data privacy:
-
-* **Automatic Sanitization:** Scans raw text before transmitting prompts to cloud APIs, intercepting:
-  - **Bank Account / IBAN Numbers** (regex matching standard IBANs and 9–18 digit account sequences).
-  - **Credit & Debit Card Numbers** (13–19 digit Luhn-like sequences).
-  - **National Identification & Tax IDs** (US SSN `XXX-XX-XXXX`, Indian PAN `[A-Z]{5}[0-9]{4}[A-Z]`).
-  - **Personal Contact Numbers & Personal Emails**.
-* **Zero Leak Guarantee:** Third-party cloud models only receive masked tokens (e.g. `[REDACTED_BANK_ACC_0]`, `[REDACTED_PHONE_1]`).
-* **Local Reversible Restoration:** Once structured outputs return, the local pipeline safely restores legitimate values in memory so your local ledger and database remain 100% complete and accurate.
-* **Governance UI:** Active status badge in the top navbar (`● PII Shield Active`) with toggle controls in the Security page.
-
----
-
-## 9. Dynamic Template Studio & Custom Field Definition
-
-To handle atypical or non-standard documents (hall tickets, logistics waybills, freight receipts, medical claims) without modifying core code:
-
-1. **Visual Document Intake:** Upload any PDF or image (`.jpg`, `.jpeg`, `.png`) to inspect page 1 in the interactive preview container.
-2. **Deep Entity Discovery:** `POST /api/templates/discover` scans the document and surfaces:
-   - Colon-separated pairs (`Key: Value`) across the text.
-   - Document references, dates, due dates, amounts, taxes, and tables.
-   - Portal URLs and web references.
-3. **Interactive Schema Builder:**
-   - Select which fields to include via checkboxes.
-   - Rename display labels or edit field keys.
-   - Use **"Add Field"** to add custom user-defined keys (e.g., `seat_number`, `prn_number`, `tracking_id`).
-4. **Persistent Template Store:** Save templates by name (e.g., *"University Hall Ticket"*, *"Amazon Logistics Waybill"*). Templates persist in browser `localStorage` and backend `templates/*.json`.
-5. **Execution & Export:** Click **"Extract Document Using This Template"** to extract custom structured records matching your schema, downloadable as custom JSON or formatted Excel.
-
----
-
-## 10. Cost Calculation & Market Economics
-
-### Actual Token & API Cost (10 Sample Documents)
-- **Average Prompt Tokens per Document:** 2,160 tokens
-- **Average Completion Tokens per Document:** 405 tokens
-- **Groq Free Tier (10-key rotation):** **\$0.000000 USD**
-- **Commercial GPT-4o-mini Rate:** **\$0.000567 USD per document**
-
-### Market Cost Comparison
-- **Manual Human Data Entry:** \$12.00 – \$18.00 per invoice (fully loaded labor).
-- **Enterprise IDP (Rossum, ABBYY):** \$0.20 – \$0.60 per invoice (+ \$15k/yr platform retainer).
-- **Hyperscale Cloud (AWS Textract, Google DocAI):** \$0.015 – \$0.025 per document.
-- **This Pipeline (Groq Free / Local LLM):** **\$0.0000 per document**.
-- **This Pipeline (GPT-4o-mini):** **~\$0.0006 per document**.
-
-*For an SMB processing 500 invoices/month, switching from manual entry to this automated pipeline yields over **\$89,900 in net annual savings (>2,900,000% ROI)**.*
-
----
-
-## 11. Repository File Structure
+## 10. Project layout
 
 ```
-EsMagicoAgent/
-├── PLAN.MD                          # Master architecture blueprint
-├── README.md                        # Complete documentation & benchmark report
-├── requirements.txt                 # Core dependencies
-├── pytest.ini                       # Test suite runner configuration
-├── .env.example                     # Environment template (no secret keys committed)
-├── config/
-│   ├── settings.py                  # Pydantic BaseSettings environment config
-│   └── prompts.py                   # Master extraction & self-correction prompts
-├── pipeline/
-│   ├── models.py                    # Schema definition (InvoiceSchema, LineItem)
-│   ├── document_loader.py           # PyMuPDF text & image rendering intake
-│   ├── ocr_engine.py                # RapidOCR ONNX layout engine + Tesseract fallback
-│   ├── pii_shield.py                # Cloud PII Redaction & Privacy Shield (Banks, SSN, PAN)
-│   ├── template_engine.py           # Dynamic Template Studio & Custom Entity Discovery
-│   ├── extractor.py                 # Core extraction & validation orchestrator
-│   ├── validator.py                 # Schema & arithmetic balance checker
-│   ├── cost_tracker.py              # Token usage & USD expenditure calculator
-│   └── output_writer.py             # File exporter for outputs/
-├── ai_backends/
-│   ├── base.py                      # Abstract backend interface
-│   ├── no_ai.py                     # Deterministic rule & layout token parser
-│   ├── groq_backend.py              # 10-key rotation pool with 429 cooldowns
-│   ├── local_llm.py                 # OpenAI-compatible local harness (Ollama/Hermes)
-│   ├── gemini_backend.py            # Google Gemini 1.5 Flash client
-│   ├── openai_backend.py            # OpenAI & Antigravity gateway client
-│   └── router.py                    # Dynamic backend resolution
-├── eval/
-│   ├── metrics.py                   # Matching rules (fuzzy vendor, dates, tolerances)
-│   ├── harness.py                   # One-command evaluation harness (L01 - L10)
-│   └── report.py                    # Terminal Rich table & markdown reporter
-├── dashboard/
-│   └── static/
-│       └── index.html               # 6-Page Enterprise Operations Suite (Tailwind / Lucide)
-├── templates/                       # Persistent JSON storage for user-defined OCR templates
-├── api/
-│   ├── main.py                      # FastAPI application entrypoint & static mount
-│   ├── models.py                    # Request and response models
-│   └── routes/
-│       ├── health.py                # Health check endpoint
-│       ├── extract.py               # Document upload & extraction endpoint
-│       ├── evaluation.py            # Automated eval benchmark endpoint
-│       └── dashboard_api.py         # Workspace, batch, excel export, keys, & MCP APIs
-├── scripts/
-│   ├── serve_dashboard.py           # Launches Enterprise Dashboard on http://localhost:8000
-│   ├── extract.py                   # CLI tool to extract single document or folder
-│   ├── eval.py                      # CLI evaluation benchmark runner
-│   └── batch.py                     # CLI batch runner for all 20 documents
-├── agents/
-│   ├── extraction_agent.py          # Autonomous agent with retry loop
-│   ├── opencode_agent.json          # OpenCode harness configuration
-│   └── skills/                      # Antigravity agent skill definitions
-│       ├── extract_invoice.md
-│       ├── run_eval.md
-│       └── batch_process.md
-├── outputs/                         # All 20 document JSON outputs (L01..L10, U01..U10)
-├── reports/                         # Generated accuracy and cost reports
-└── tests/                           # Pytest unit & integration test suite
+config/            settings.py (env), prompts.py (extraction + retry prompts, PROMPT_VERSION)
+pipeline/          document_loader · ocr_engine (auto-upright, OCR fallback) · extractor (retry loop)
+                   normalizer · validator · models (schema) · cost_tracker · cache · batch_runner
+                   template_engine (custom templates) · pii_shield · tools (agent tools) · output_writer
+ai_backends/       base · groq_backend (key rotation, token bucket) · openai_backend (OpenAI/Gemini/local)
+                   no_ai (rule-based baseline) · router (no silent fallback)
+eval/              metrics (matching rules, error tags) · harness · report
+api/               FastAPI app + routes (extract, evaluation, dashboard, MCP playground)
+dashboard/static/  index.html · css/app.css · js/{core,overview,workspace,batch,templates,evaluation,mcp,settings}.js
+scripts/           extract.py · eval.py · batch.py · serve_dashboard.py · mcp_server.py
+outputs/           deliverable JSON for all 20 documents
+reports/           accuracy_table.md, eval/batch run metadata (tokens, cost, review flags)
+tests/             32 offline tests (validator, metrics, extractor retry/bad inputs, tools)
+REPORT.md          approach, accuracy, failure analysis, cost, needs_review check, overfitting disclosure
 ```
+
+---
+
+## 11. Privacy, security and limits
+
+- **Keys:** `.env` is git-ignored and never committed. The dashboard's settings endpoints only accept changes from the machine running the server.
+- **Sample documents** are confidential to this assignment. Keep this repository **private** and share it only with the reviewers.
+- **PII shield** masks values that the 8 output fields never need: IBANs, labelled bank accounts, Luhn-valid cards, emails, phone numbers, SSN, PAN. It only masks the **text** sent to a cloud model; page images sent to a vision model are not redacted. Use `AI_MODE=local` when documents must never leave the machine.
+- **Uploads** get sanitised, unique file names; there are a 25 MB limit and a file-type whitelist.
+- **Known limits:**
+  - 10 labelled documents is a small sample;
+  - only the first 5 pages go to the vision model (truncation is flagged);
+  - pages scanned upside down (180°) are not auto-corrected;
+  - list prices come from Groq's `/models` endpoint at run time.

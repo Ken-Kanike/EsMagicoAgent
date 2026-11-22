@@ -245,7 +245,9 @@ def upload_and_extract(file: UploadFile = File(...), mode: Optional[str] = Form(
     did = _doc_id_for(path)
     if res.data:
         _ui_write(did, res.data)
-    return _result_payload(did, file.filename or path.name, res)
+    payload = _result_payload(did, file.filename or path.name, res)
+    payload["stored_as"] = path.stem
+    return payload
 
 
 def _run_batch_job(jid: str, paths: List[Path], names: List[str], mode: Optional[str]):
@@ -263,22 +265,79 @@ def _run_batch_job(jid: str, paths: List[Path], names: List[str], mode: Optional
         did = _doc_id_for(p)
         if r.data:
             _ui_write(did, r.data)
-        results[index[p]] = _result_payload(did, names[index[p]], r)
+        payload = _result_payload(did, names[index[p]], r)
+        payload["stored_as"] = p.stem
+        results[index[p]] = payload
         _job_update(jid, done=done, results=[x for x in results if x is not None], last_file=names[index[p]])
 
     run_many(paths, ex, on_progress=progress)
     _job_update(jid, status="completed", finished_at=time.time(), results=[x for x in results if x is not None])
 
 
+def _run_template_batch_job(jid: str, paths: List[Path], names: List[str], mode: Optional[str],
+                            tmpl: Dict[str, Any]):
+    """Batch with a custom template: same parallelism and rate-limit sharing as invoice batches."""
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+    try:
+        backend = get_backend(mode or None)
+    except Exception as e:
+        _job_update(jid, status="failed", error=str(e), finished_at=time.time())
+        return
+    _job_update(jid, status="running")
+    results: List[Optional[Dict[str, Any]]] = [None] * len(paths)
+
+    def one(i: int) -> Dict[str, Any]:
+        t0 = time.time()
+        base = {"doc_id": _doc_id_for(paths[i]), "filename": names[i], "stored_as": paths[i].stem,
+                "template_id": tmpl["id"], "template_name": tmpl["name"]}
+        try:
+            r = TemplateEngine.extract_with_custom_template(paths[i], tmpl, backend=backend)
+            base.update({"data": r.get("data"), "missing_fields": r.get("missing_fields", []),
+                         "needs_review": r.get("needs_review", False),
+                         "review_reasons": r.get("review_reasons", []), "warning": r.get("warning"),
+                         "method": r.get("method"), "cost": r.get("cost") or {}, "error": None})
+        except Exception as e:
+            base.update({"data": None, "missing_fields": [], "needs_review": True, "review_reasons": [],
+                         "error": f"{type(e).__name__}: {e}", "cost": {}})
+        base["elapsed_ms"] = round((time.time() - t0) * 1000, 1)
+        return base
+
+    done = 0
+    with ThreadPoolExecutor(max_workers=max(1, min(settings.max_workers, len(paths)))) as pool:
+        futs = {pool.submit(one, i): i for i in range(len(paths))}
+        for fut in as_completed(futs):
+            i = futs[fut]
+            results[i] = fut.result()
+            done += 1
+            _job_update(jid, done=done, results=[x for x in results if x is not None], last_file=names[i])
+    _job_update(jid, status="completed", finished_at=time.time(), results=[x for x in results if x is not None])
+
+
 @router.post("/batch/jobs")
-def create_batch_job(files: List[UploadFile] = File(...), mode: Optional[str] = Form(None)):
-    """Start a background batch; poll GET /api/batch/jobs/{id} for real progress."""
+def create_batch_job(files: List[UploadFile] = File(...), mode: Optional[str] = Form(None),
+                     template_id: Optional[str] = Form(None)):
+    """
+    Start a background batch; poll GET /api/batch/jobs/{id} for real progress.
+    Without template_id: the invoice schema. With template_id: that template's fields.
+    """
     if mode:
         _extractor(mode)  # validate backend before accepting the upload
+    tmpl = None
+    if template_id:
+        tmpl = TemplateStore.get(template_id)
+        if not tmpl:
+            raise HTTPException(404, f"Template {template_id} not found.")
     paths = [_save_upload(f) for f in files]
-    jid = _new_job("batch", len(paths))
-    _job_pool.submit(_run_batch_job, jid, paths, [f.filename or p.name for f, p in zip(files, paths)], mode)
-    return {"job_id": jid, "total": len(paths)}
+    names = [f.filename or p.name for f, p in zip(files, paths)]
+    jid = _new_job("template_batch" if tmpl else "batch", len(paths))
+    if tmpl:
+        _job_update(jid, template={"id": tmpl["id"], "name": tmpl["name"],
+                                   "fields": [{"key": f["key"], "label": f.get("label") or f["key"],
+                                               "data_type": f.get("data_type")} for f in tmpl["fields"]]})
+        _job_pool.submit(_run_template_batch_job, jid, paths, names, mode, tmpl)
+    else:
+        _job_pool.submit(_run_batch_job, jid, paths, names, mode)
+    return {"job_id": jid, "total": len(paths), "template_id": template_id}
 
 
 @router.get("/batch/jobs/{job_id}")
@@ -654,23 +713,131 @@ def test_connection(payload: Dict[str, Any]):
 
 
 # ---------------------------------------------------------------- tool schema
+# ---------------------------------------------------------------- MCP / agent tools
+@router.get("/mcp/tools")
+def mcp_list_tools():
+    """The same tools the MCP server (scripts/mcp_server.py) exposes, with their JSON schemas."""
+    from pipeline import tools
+    return {"server": "invoice-pipeline", "transport": "stdio", "tools": tools.describe_tools()}
+
+
+@router.post("/mcp/call")
+def mcp_call_tool(payload: Dict[str, Any]):
+    """Run one tool exactly as an MCP client would (doc_id only; no file paths over HTTP)."""
+    from pipeline import tools
+    name = str(payload.get("tool") or "")
+    args = payload.get("arguments") or {}
+    if not isinstance(args, dict):
+        raise HTTPException(422, "'arguments' must be an object.")
+    t0 = time.time()
+    try:
+        result = tools.call_tool(name, args, allow_path=False)
+    except BackendNotConfigured as e:
+        raise HTTPException(400, str(e))
+    except (ValueError, TypeError) as e:
+        raise HTTPException(400, str(e))
+    return {"tool": name, "elapsed_ms": round((time.time() - t0) * 1000, 1), "result": result}
+
+
+@router.get("/mcp/config")
+def mcp_client_config():
+    """Ready-to-paste client configuration with this machine's absolute paths."""
+    import sys as _sys
+    script = settings.resolve_path("scripts") / "mcp_server.py"
+    py = _sys.executable
+    block = {"mcpServers": {"invoice-pipeline": {"command": py, "args": [str(script)]}}}
+    return {
+        "claude_desktop": block,
+        "cursor": block,
+        "claude_code": f'claude mcp add invoice-pipeline -- "{py}" "{script}"',
+        "inspector": f'npx @modelcontextprotocol/inspector "{py}" "{script}"',
+    }
+
+
 @router.get("/mcp/manifest")
 def get_mcp_manifest():
-    """JSON tool descriptions for agent frameworks. This is a schema only, not a running MCP server."""
+    """Backwards-compatible alias of /api/mcp/tools."""
+    return mcp_list_tools()
+
+
+# ---------------------------------------------------------------- overview (dashboard home)
+@router.get("/documents/{doc_id}/info")
+def get_document_info(doc_id: str):
+    """Page count etc. for the viewer's page navigation."""
+    path = _find_document(doc_id)
+    if not path:
+        raise HTTPException(404, f"Document {doc_id} not found.")
+    doc = load_document(path)
+    return {"doc_id": doc_id, "file": path.name, "readable": doc.is_readable, "error": doc.error,
+            "page_count": doc.page_count if doc.is_readable else 0,
+            "pages_rendered": min(doc.page_count, settings.max_pages) if doc.is_readable else 0,
+            "has_text_layer": bool((doc.text or "").strip())}
+
+
+@router.get("/overview")
+def get_overview():
+    """Home-page summary built only from files the CLI wrote (outputs/, reports/); no model calls."""
+    reports = settings.resolve_path("reports")
+    queue: List[Dict[str, Any]] = []
+    runs: Dict[str, Any] = {}
+    for source, fname in (("batch", "batch_run_metadata.json"), ("eval", "eval_run_metadata.json")):
+        p = reports / fname
+        if not p.exists():
+            continue
+        try:
+            rows = json.loads(p.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        runs[source] = {
+            "updated_at": p.stat().st_mtime, "documents": len(rows),
+            "needs_review": sum(1 for r in rows if r.get("needs_review")),
+            "errors": sum(1 for r in rows if r.get("error")),
+            "tokens_in": sum(r.get("tokens_in") or 0 for r in rows),
+            "tokens_out": sum(r.get("tokens_out") or 0 for r in rows),
+            "cost_usd": round(sum(r.get("cost_usd") or 0 for r in rows), 6),
+            "backend": next((r.get("backend") for r in rows if r.get("backend")), None),
+        }
+        for r in rows:
+            if r.get("needs_review") or r.get("error"):
+                queue.append({"source": source, "file": r.get("file"), "doc_id": Path(str(r.get("file"))).stem.upper(),
+                              "reasons": r.get("review_reasons") or [], "error": r.get("error")})
+
+    outputs = []
+    out_dir = settings.resolve_path(settings.outputs_dir)
+    for jf in sorted(out_dir.glob("*.json")) if out_dir.exists() else []:
+        try:
+            d = json.loads(jf.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        items = d.get("line_items") or []
+        balanced = None
+        if d.get("is_invoice") and d.get("total") is not None and items:
+            s = sum((i.get("amount") or 0) for i in items) + (d.get("tax_total") or 0)
+            balanced = abs(s - d["total"]) <= max(settings.arithmetic_tolerance, 0.01 * len(items))
+        outputs.append({"doc_id": jf.stem, "is_invoice": d.get("is_invoice"), "vendor": d.get("vendor"),
+                        "invoice_number": d.get("invoice_number"), "invoice_date": d.get("invoice_date"),
+                        "currency": d.get("currency"), "total": d.get("total"), "line_items": len(items),
+                        "balanced": balanced, "error": d.get("error")})
+
+    eval_summary = None
+    ep = reports / "eval_results.json"
+    if ep.exists():
+        try:
+            s = json.loads(ep.read_text(encoding="utf-8"))
+            eval_summary = {k: s.get(k) for k in (
+                "mode", "total_docs", "overall_accuracy", "field_accuracy", "docs_fully_correct",
+                "avg_cost_per_doc", "total_tokens_in", "total_tokens_out", "line_item_row_precision",
+                "line_item_row_recall", "wall_time_s")}
+            eval_summary["updated_at"] = ep.stat().st_mtime
+        except Exception:
+            eval_summary = None
+
     return {
-        "name": "invoice-extraction-tools",
-        "note": "Tool schemas that map 1:1 to this REST API. Not an MCP server process.",
-        "tools": [
-            {"name": "extract_invoice", "http": "POST /extract (multipart file)",
-             "description": "Extract the 8-field invoice schema from a PDF/image; returns needs_review + reasons.",
-             "parameters": {"type": "object", "properties": {
-                 "file": {"type": "string", "format": "binary"},
-                 "mode": {"type": "string", "enum": VALID_MODES}}, "required": ["file"]}},
-            {"name": "start_batch", "http": "POST /api/batch/jobs",
-             "description": "Process many files in the background; poll GET /api/batch/jobs/{id}."},
-            {"name": "extract_with_template", "http": "POST /api/templates/extract",
-             "description": "Extract user-defined fields with a saved template."},
-            {"name": "evaluate", "http": "POST /api/eval/jobs",
-             "description": "Run the labelled-set evaluation and return field accuracy."},
-        ],
+        "eval": eval_summary, "runs": runs, "review_queue": queue, "outputs": outputs,
+        "counts": {"outputs": len(outputs), "invoices": sum(1 for o in outputs if o["is_invoice"]),
+                   "non_invoices": sum(1 for o in outputs if o["is_invoice"] is False),
+                   "templates": len(TemplateStore.list())},
+        "engine": {"mode": settings.ai_mode, "vision_model": settings.groq_vision_model,
+                   "text_model": settings.groq_text_model, "max_workers": settings.max_workers,
+                   "pii_shield": settings.pii_shield_enabled},
     }

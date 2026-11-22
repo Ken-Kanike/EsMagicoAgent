@@ -132,7 +132,8 @@ def run_evaluation(mode: Optional[str] = None, labelled_dir: Optional[Path] = No
             elapsed_s=res.elapsed_s, needs_review=res.needs_review,
             issues=res.review_reasons, errors=errors, line_items=li, cached=res.cached, error=res.error,
         ))
-    write_run_metadata(results, "eval_run_metadata")
+    if save_outputs:  # --no-save must leave reports/ untouched too
+        write_run_metadata(results, "eval_run_metadata")
 
     n = len(records)
     total_fields = n * len(FIELDS_TO_EVALUATE)

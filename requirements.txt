@@ -16,6 +16,7 @@ python-multipart>=0.0.9
 # LLM providers
 groq>=0.11.0                  # primary backend
 openai>=1.20.0                # OpenAI / Gemini (OpenAI-compatible) / local LLM backends
+mcp>=1.2.0                    # MCP server (scripts/mcp_server.py); works with mcp 1.x and 2.x
 
 # Evaluation, CLI & export
 rapidfuzz>=3.8.0
