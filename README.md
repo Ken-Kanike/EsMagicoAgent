@@ -1,5 +1,7 @@
 # Invoice Extraction Pipeline
 
+![Dashboard overview: labelled accuracy, cost per document, tokens per document, review queue](docs/dashboard.png)
+
 Reads a vendor invoice (clean PDF, phone scan or photo) and returns **validated JSON** in the assignment schema. It also handles documents that are not invoices, and corrupt files. It comes with a one-command evaluation, outputs for all 20 sample documents, a dashboard, and an MCP server so agents can use the pipeline as tools.
 
 > **Results, approach, failure analysis and cost are in [REPORT.md](REPORT.md).** In short, on the 10 labelled documents with Groq (`qwen/qwen3.8-27b` vision + `openai/gpt-oss-120b` text):
@@ -23,6 +25,7 @@ Reads a vendor invoice (clean PDF, phone scan or photo) and returns **validated 
 9. [Configuration](#9-configuration)
 10. [Project layout](#10-project-layout)
 11. [Privacy, security and limits](#11-privacy-security-and-limits)
+12. [Deploy (free tier)](#12-deploy-free-tier)
 
 ---
 
@@ -257,6 +260,8 @@ scripts/           extract.py · eval.py · batch.py · serve_dashboard.py · mc
 outputs/           deliverable JSON for all 20 documents
 reports/           accuracy_table.md, eval/batch run metadata (tokens, cost, review flags)
 tests/             32 offline tests (validator, metrics, extractor retry/bad inputs, tools)
+docs/              dashboard screenshot
+Dockerfile         container for hosting (Render, Hugging Face Spaces, any VM); render.yaml = Render blueprint
 REPORT.md          approach, accuracy, failure analysis, cost, needs_review check, overfitting disclosure
 ```
 
@@ -273,3 +278,56 @@ REPORT.md          approach, accuracy, failure analysis, cost, needs_review chec
   - only the first 5 pages go to the vision model (truncation is flagged);
   - pages scanned upside down (180°) are not auto-corrected;
   - list prices come from Groq's `/models` endpoint at run time.
+
+---
+
+## 12. Deploy (free tier)
+
+The app is one long-running FastAPI process: background batch and eval jobs are held in memory, uploads are written to disk, and the OCR models load once. That rules out serverless platforms such as **Vercel** or Netlify Functions:
+- the Python bundle limit is 250 MB, and PyMuPDF + ONNX OCR + pandas exceed it;
+- requests time out at 10–60 s, while an eval run takes 2–3 minutes;
+- there is no shared memory between invocations, so job polling breaks;
+- the filesystem is read-only.
+
+A container host is the right fit. The repository ships a [Dockerfile](Dockerfile) and a Render blueprint ([render.yaml](render.yaml)).
+
+> **Set `APP_PASSWORD` on any public deployment.** The sample documents are confidential, and every extraction spends your API quota. With `APP_PASSWORD` set, the whole app (dashboard and API) requires HTTP basic auth with user `admin`, or `APP_USER` if you set it; `/health` stays open for health checks. Keys come from the platform's secret settings, never from the repo, and the dashboard's settings page is read-only when not accessed from localhost.
+
+### Option A: Render (recommended; free, deploys from GitHub)
+
+1. Push this repo to GitHub (private is fine: Render asks for access).
+2. On [render.com](https://render.com): **New → Blueprint**, then pick the repo. Render reads `render.yaml`.
+3. When prompted, enter `GROQ_API_KEY_1` and choose an `APP_PASSWORD`. **Apply.**
+4. The first build takes about 5 minutes. Open `https://<service>.onrender.com`, log in as `admin` / your password, and the dashboard loads with the committed outputs and eval.
+
+The free instance has 512 MB RAM and sleeps after 15 minutes idle, so the first request after that takes about a minute. The container uses about 415 MB once the OCR models load (measured locally), which fits but leaves little headroom; Option B has far more memory.
+
+### Option B: Hugging Face Spaces (free, 16 GB RAM, does not sleep while in use)
+
+1. Create a Space: **SDK = Docker**, visibility **Private**.
+2. Under Settings → Variables and secrets, add the secrets `GROQ_API_KEY_1` and `APP_PASSWORD`, and the variable `PORT=7860`.
+3. Push this repo to the Space's git remote. Keep the YAML header that Hugging Face generated at the top of the Space's `README.md`, with `sdk: docker` and `app_port: 7860`.
+
+### Any VM or local Docker
+
+```bash
+docker build -t invoice-pipeline .
+docker run -p 8000:8000 --env-file .env -e APP_PASSWORD=change-me invoice-pipeline
+# → http://localhost:8000  (user: admin)
+```
+
+### What persists
+
+Uploads, dashboard results, saved templates and the result cache live on the container's disk. On free plans that disk is reset on every redeploy and restart. The deliverables (`outputs/`, `reports/`) are baked into the image from the repo.
+
+---
+
+## Submission checklist
+
+- [x] Code, README with fresh-clone setup, `.env.example`, and no keys in git history
+- [x] CLI (`scripts/extract.py`) and API (`api/main.py`)
+- [x] One-command eval (`python scripts/eval.py`) with stated matching rules
+- [x] `outputs/` with JSON for all 20 documents
+- [x] [REPORT.md](REPORT.md): approach, what did not work, accuracy table, failure analysis, cost per document, overfitting disclosure
+- [x] Bonus: `needs_review` checked against the data; upload-and-view frontend
+- [ ] Keep the GitHub repo **private** (the sample documents are confidential) and add the reviewers as collaborators

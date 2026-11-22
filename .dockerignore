@@ -1,0 +1,20 @@
+# secrets and local state never go into the image
+.env
+*.env.local
+.cache/
+temp_upload/
+outputs/dashboard/
+templates/*.json
+AUDIT_REPORT.md
+
+# VCS, editors, caches
+.git/
+.gitignore
+.vscode/
+.idea/
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+venv/
+*.bundle

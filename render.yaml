@@ -1,0 +1,19 @@
+# Render Blueprint: Dashboard -> New -> Blueprint -> pick this repo.
+# Free plan: 512 MB RAM, sleeps after 15 min idle (first request then takes ~1 min to wake).
+services:
+  - type: web
+    name: invoice-pipeline
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: AI_MODE
+        value: groq
+      - key: GROQ_API_KEY_1
+        sync: false          # you are prompted for the value; it is never stored in the repo
+      - key: APP_PASSWORD
+        sync: false          # login for the dashboard (user "admin"); protects the confidential samples and your quota
+      - key: MAX_WORKERS
+        value: "2"           # keep memory low on the free instance
