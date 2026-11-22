@@ -15,11 +15,11 @@ function accuracyChart(canvas, fieldAccuracy, existing) {
   if (existing) { existing.data.datasets[0].data = data; existing.update(); return existing; }
   return new Chart(canvas.getContext("2d"), {
     type: "bar",
-    data: { labels: FIELD_LABELS, datasets: [{ data, backgroundColor: data.map(v => v >= 99.9 ? "#4f7cff" : v >= 80 ? "#fbbf24" : "#f87171"), borderRadius: 5, maxBarThickness: 26 }] },
+    data: { labels: FIELD_LABELS, datasets: [{ data, backgroundColor: data.map(v => v >= 99.9 ? "#d4d4d4" : v >= 80 ? "#fbbf24" : "#f87171"), borderRadius: 3, maxBarThickness: 22 }] },
     options: {
       responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => `${c.parsed.y}%` } } },
-      scales: { y: { beginAtZero: true, max: 100, grid: { color: "#1e2437" }, ticks: { color: "#6f7894", callback: v => v + "%" } },
-        x: { grid: { display: false }, ticks: { color: "#a3abc2", font: { size: 11 } } } },
+      scales: { y: { beginAtZero: true, max: 100, grid: { color: "#161616" }, border: { color: "#2b2b2b" }, ticks: { color: "#666666", callback: v => v + "%" } },
+        x: { grid: { display: false }, ticks: { color: "#a0a0a0", font: { size: 11, family: "Inter" } } } },
     },
   });
 }

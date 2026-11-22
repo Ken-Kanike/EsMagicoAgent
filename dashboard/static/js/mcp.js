@@ -4,16 +4,63 @@
 const M = { tools: [], config: null, client: "claude_code", docs: [], templates: [] };
 
 const CLIENT_HINTS = {
-  claude_code: "Run once in a terminal. The server starts on demand over stdio; check it with  claude mcp list.",
+  agent_prompt: "Paste this into the agent chat of any IDE (Claude Code, Cursor, Windsurf, VS Code, Zed…). The agent installs the server in its own config, starts it and checks the tools.",
+  claude_code: "Run once in a terminal. The server starts on demand over stdio. Check it with: claude mcp list",
   claude_desktop: "Paste into claude_desktop_config.json (Settings → Developer → Edit config), then restart Claude Desktop.",
-  cursor: "Paste into ~/.cursor/mcp.json (or .cursor/mcp.json in a project) and reload Cursor.",
-  inspector: "Opens the official MCP Inspector in your browser to list and call the tools interactively.",
+  cursor: "Paste into ~/.cursor/mcp.json (all projects) or .cursor/mcp.json (this project), then reload Cursor.",
+  vscode: "Paste into .vscode/mcp.json in your workspace (VS Code 1.99+ agent mode), then start the server from the file's code lens.",
+  inspector: "Opens the official MCP Inspector in your browser to list and call the tools by hand.",
 };
+
+/** Server launch details, taken from /api/mcp/config so the paths are this machine's. */
+function mcpServerSpec() {
+  const s = M.config && M.config.claude_desktop && M.config.claude_desktop.mcpServers && M.config.claude_desktop.mcpServers["invoice-pipeline"];
+  return s || { command: "python", args: ["scripts/mcp_server.py"] };
+}
+
+function mcpSetupPrompt() {
+  const { command, args } = mcpServerSpec();
+  const script = args[0] || "scripts/mcp_server.py";
+  const root = script.replace(/[\\/]scripts[\\/]mcp_server\.py$/, "");
+  const sep = script.includes("\\") ? "\\" : "/";
+  const toolNames = M.tools.map(t => t.name).join(", ");
+  const block = JSON.stringify({ mcpServers: { "invoice-pipeline": { command, args } } }, null, 2);
+  return `Set up the "invoice-pipeline" MCP server in this editor for me, then verify it works.
+
+Server
+- Name: invoice-pipeline
+- Transport: stdio (the client starts the process itself; there is no URL or port)
+- Command: ${command}
+- Args: ${JSON.stringify(args)}
+- Project folder: ${root}
+- Python packages: ${root}${sep}requirements.txt (install with: "${command}" -m pip install -r "${root}${sep}requirements.txt" if imports fail)
+- Extraction tools need a Groq key in ${root}${sep}.env (GROQ_API_KEY_1=...). Never print, copy or commit that file.
+
+Steps
+1. Work out which client you are running in and use its own MCP configuration. Merge into the existing file and keep every other server:
+   - Claude Code: claude mcp add --scope user invoice-pipeline -- "${command}" "${script}"
+   - Cursor: ~/.cursor/mcp.json under "mcpServers"
+   - Windsurf: ~/.codeium/windsurf/mcp_config.json under "mcpServers"
+   - VS Code (Copilot agent mode): .vscode/mcp.json under "servers", with "type": "stdio"
+   - Claude Desktop: claude_desktop_config.json under "mcpServers" (Windows: %APPDATA%\\Claude, macOS: ~/Library/Application Support/Claude); tell me to restart it
+   - Any other client: its documented stdio MCP config, with the same command and args
+2. Check that the command and the script path exist, then run: "${command}" "${script}" --print-config
+   It should print a JSON config and exit. If it fails, install the requirements (above) and try again.
+3. Reload the MCP servers and list the tools. Expect these ${M.tools.length}: ${toolNames}.
+4. Smoke test: call list_documents, then get_latest_evaluation. Do not call extract_invoice or extract_with_template unless I ask, because they spend API credits.
+5. Tell me which file you changed and what the smoke test returned.
+
+Config block (for clients that use "mcpServers"):
+${block}`;
+}
 
 function mcpShowClient(name) {
   M.client = name;
   $$("#mcpClientTabs .tab").forEach(t => t.classList.toggle("active", t.dataset.client === name));
-  const v = M.config ? M.config[name] : "";
+  let v;
+  if (name === "agent_prompt") v = mcpSetupPrompt();
+  else if (name === "vscode") { const { command, args } = mcpServerSpec(); v = { servers: { "invoice-pipeline": { type: "stdio", command, args } } }; }
+  else v = M.config ? M.config[name] : "";
   $("#mcpConfig").textContent = typeof v === "string" ? v : JSON.stringify(v, null, 2);
   $("#mcpConfig").classList.toggle("wrap", typeof v === "string");
   $("#mcpClientHint").textContent = CLIENT_HINTS[name] || "";
@@ -116,7 +163,8 @@ registerPage("mcp", {
       copyText(`curl -s -X POST ${location.origin}/api/mcp/call -H "Content-Type: application/json" -d '${JSON.stringify({ tool: $("#mcpTool").value, arguments: args })}'`, "curl command copied");
     };
     $$("#mcpClientTabs .tab").forEach(t => t.onclick = () => mcpShowClient(t.dataset.client));
-    $("#mcpCopy").onclick = () => copyText($("#mcpConfig").textContent, "Configuration copied");
+    $("#mcpCopy").onclick = () => copyText($("#mcpConfig").textContent, "Copied");
+    $("#mcpPromptBtn").onclick = () => { mcpShowClient("agent_prompt"); copyText(mcpSetupPrompt(), "Setup prompt copied. Paste it into your IDE's agent chat."); };
     mcpShowClient(M.client);
     mcpSelectTool();
   },

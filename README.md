@@ -190,7 +190,7 @@ It writes [reports/accuracy_table.md](reports/accuracy_table.md) and `reports/ev
 | **Batch processing** | Drop many files and choose the **invoice schema or any saved template**. Runs as a background job with live progress; results can be filtered (needs review / errors / valid); click any row for a **preview drawer** with the document and its fields; export to Excel or a JSON zip |
 | **Template studio** | Define custom fields for non-invoice documents (hall tickets, waybills…): auto-discover fields with the LLM, edit keys, types and required flags, save/update/delete, test, then **Use in batch** |
 | **Evaluation** | Run the labelled eval (asks before spending API calls), field chart, per-document matrix with a prediction-vs-truth drawer, error groups, `needs_review` confusion matrix, cost method |
-| **MCP & agents** | Copy-paste config for Claude Code, Claude Desktop, Cursor and the MCP Inspector (with this machine's paths), the tool list, and a **playground** that calls each tool with a generated form |
+| **MCP & agents** | **Copy setup prompt** button: a ready-made instruction to paste into any IDE agent (Claude Code, Cursor, Windsurf, VS Code…) so it installs and checks the server itself. Also copy-paste config for Claude Code, Claude Desktop, Cursor, VS Code and the MCP Inspector (with this machine's paths), the tool list, and a **playground** that calls each tool with a generated form |
 | **Settings** | Default backend, provider keys with live connection tests, PII shield toggle with a redaction tester |
 
 Results produced in the dashboard are written to `outputs/dashboard/`. The deliverable `outputs/*.json` files are only written by the CLI, so trying another backend in the UI can't overwrite them.
@@ -214,6 +214,8 @@ claude mcp add invoice-pipeline -- python /abs/path/to/scripts/mcp_server.py    
 python scripts/mcp_server.py --print-config                                       # Claude Desktop / Cursor block
 npx @modelcontextprotocol/inspector python scripts/mcp_server.py                  # try it interactively
 ```
+
+The quickest setup is the **Copy setup prompt** button on the dashboard's MCP page. Paste the prompt into your IDE's agent chat, and the agent adds the server to its own config (keeping your other servers), starts it, lists the tools and runs a no-cost smoke test.
 
 Over HTTP (`POST /api/mcp/call`) only `doc_id`s are accepted, never file paths.
 
